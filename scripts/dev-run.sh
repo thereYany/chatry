@@ -14,5 +14,7 @@ export DB_URL="${DB_URL:-jdbc:mysql://127.0.0.1:3306/chatry_dev?createDatabaseIf
 export DB_USER="${DB_USER:-chat}"
 export DB_PASSWORD="${DB_PASSWORD:-chatpass}"
 
+JAVA_OPTS="${JAVA_OPTS:--Xms64m -Xmx384m -XX:MaxMetaspaceSize=192m}"
+
 echo "==> chatry: http://127.0.0.1:${SERVER_PORT:-8084}（健康：/api/health，指标：127.0.0.1:9092/actuator/health）"
-exec java -jar "$JAR"
+exec java $JAVA_OPTS -jar "$JAR"

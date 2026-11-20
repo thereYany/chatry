@@ -1,3 +1,5 @@
+import { BASE_PATH } from './config.js';
+
 const SESSION_KEY = 'chatry.session';
 
 export function getSession() {
@@ -28,7 +30,7 @@ export async function api(path, { method = 'GET', body, token = authToken() } = 
   if (token) {
     headers.Authorization = `Bearer ${token}`;
   }
-  const response = await fetch(path, {
+  const response = await fetch(`${BASE_PATH}${path}`, {
     method,
     headers,
     body: body === undefined ? undefined : JSON.stringify(body),
@@ -57,7 +59,7 @@ export async function api(path, { method = 'GET', body, token = authToken() } = 
  * 返回 done 事件载荷；错误抛出带 category 的 Error。
  */
 export async function streamChat({ conversationId, content, onDelta, signal }) {
-  const response = await fetch(`/api/chat/conversations/${conversationId}/messages/stream`, {
+  const response = await fetch(`${BASE_PATH}/api/chat/conversations/${conversationId}/messages/stream`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

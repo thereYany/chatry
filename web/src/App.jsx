@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { BrowserRouter, Link, Navigate, NavLink, Outlet, Route, Routes, useNavigate } from 'react-router-dom';
 import { api, clearSession, getSession, setSession } from './api.js';
+import { BASE_PATH } from './config.js';
 import Login from './pages/Login.jsx';
 import Chat from './pages/Chat.jsx';
 import Mall from './pages/Mall.jsx';
@@ -101,7 +102,7 @@ function Layout() {
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={BASE_PATH || undefined}>
       <AuthProvider>
         <CreditsProvider>
           <Routes>

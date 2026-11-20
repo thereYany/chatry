@@ -77,7 +77,9 @@ scripts/smoke.sh
 scripts/flash-concurrency.sh
 ```
 
-打开 http://127.0.0.1:8084/ ，演示账号 `demo / demo123456`，管理员 `admin / admin12345`（演示环境关闭强制改密）。
+打开 **<https://118.31.111.223/chatry/>**（nginx 443 同源反代，证书为自签，与 DSH GUI 相同）；
+本机也可直接访问 http://127.0.0.1:8084/ 。演示账号 `demo / demo123456`，管理员 `admin / admin12345`（演示环境关闭强制改密）。
+反向代理配置见 [docs/deploy-nginx.md](docs/deploy-nginx.md)。
 
 接真实模型：`DEEPSEEK_ENABLED=true DEEPSEEK_API_KEY=... CHATRY_CHAT_MODEL=deepseek-flash`。
 
