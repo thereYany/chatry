@@ -59,6 +59,11 @@ app:
     ttl-minutes: ${JWT_TTL_MINUTES:10080}
     issuer: ${JWT_ISSUER:atry}
     audience: ${JWT_AUDIENCE:chatry-web}
+  logging:
+    access-log-enabled: ${LOG_ACCESS_ENABLED:true}
+    access-log-slow-ms: ${ACCESS_LOG_SLOW_MS:1000}
+    slow-sql-enabled: ${SLOW_SQL_ENABLED:false}
+    slow-sql-threshold-ms: ${SLOW_SQL_THRESHOLD_MS:200}
   payment:
     provider: ${PAYMENT_PROVIDER:mock}
     app-id: ${PAYMENT_APP_ID:chatry}
@@ -156,19 +161,21 @@ atry:
       enabled: ${ATRY_METERING_EXPIRY_ENABLED:true}
       poll-ms: ${ATRY_METERING_EXPIRY_POLL_MS:60000}
 
+# 日志格式/脱敏/滚动由 logback-spring.xml 接管
 logging:
-  file:
-    name: ${LOG_FILE:logs/chatry.log}
-  logback:
-    rollingpolicy:
-      max-file-size: 20MB
-      max-history: 14
-      total-size-cap: 1GB
-  pattern:
-    level: "%5p [traceId=%X{traceId:-}]"
   level:
     com.wherelee.base: info
     com.wherelee.chatry: info
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: ${SPRINGDOC_ENABLED:true}
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: ${SPRINGDOC_ENABLED:true}
+    operations-sorter: alpha
+  packages-to-scan: com.wherelee.chatry
 
 chatry:
   mall:

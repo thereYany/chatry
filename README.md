@@ -120,6 +120,17 @@ scripts/dev-run-deepseek.sh   # 读 ~/.config/atry/deepseek.env 或 DEEPSEEK_API
 
 实测（本机 20 并发抢 5 件）：**5 成功 / 15 售罄，库存归零，无超卖**；数据库订单数 = 5。脚本 `scripts/flash-concurrency.sh` 可复现。
 
+## 可观测性与错误契约（跟随 atry 0.2.0）
+
+- 日志：`logback-spring.xml`（dev 文本 / prod JSON），每行带 traceId/userId/tenantId，消息脱敏；
+  文件 `logs/chatry.log`、`logs/chatry-error.log`、`logs/chatry-access.log`
+- 访问日志：`access method=... path=... status=... latencyMs=... userId=... tenantId=... slow=... traceId=...`；
+  SSE 记录完整流时长；`LOG_ACCESS_ENABLED` / `ACCESS_LOG_SLOW_MS` 可调
+- 错误体统一为 `code/message/traceId/path/timestamp/details`；LLM 错误码直接用内核分类
+  （`QUOTA_EXHAUSTED` / `RATE_LIMITED` / `CANCELLED` ...），前端按 `code` 分支
+- 慢 SQL：`SLOW_SQL_ENABLED=true SLOW_SQL_THRESHOLD_MS=200`（默认关）
+- OpenAPI：本机 `http://127.0.0.1:8084/v3/api-docs`（公网 `/chatry/` 前缀下 Swagger UI 重定向不走前缀，以 JSON 为准）
+
 ## 测试
 
 ```bash
