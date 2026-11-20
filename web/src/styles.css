@@ -833,6 +833,45 @@ label {
   gap: 10px;
 }
 
+/* ---------- 账号安全 ---------- */
+
+.session-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.session-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+}
+
+.session-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.session-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+@media (max-width: 780px) {
+  .session-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
 /* ---------- 管理端 ---------- */
 
 .admin-grid {

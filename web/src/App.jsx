@@ -6,6 +6,7 @@ import Login from './pages/Login.jsx';
 import Chat from './pages/Chat.jsx';
 import Mall from './pages/Mall.jsx';
 import Admin from './pages/Admin.jsx';
+import Account from './pages/Account.jsx';
 
 const AuthContext = createContext(null);
 const CreditsContext = createContext(null);
@@ -33,7 +34,13 @@ function AuthProvider({ children }) {
     return result;
   }, []);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    // 先尽力通知服务端吊销当前会话，失败也不阻塞本地登出
+    try {
+      await api('/api/auth/logout', { method: 'POST' });
+    } catch {
+      // 令牌已过期等情况忽略
+    }
     clearSession();
     setSessionState(null);
   }, []);
@@ -84,6 +91,7 @@ function Layout() {
         <nav className="nav">
           <NavLink to="/chat">对话</NavLink>
           <NavLink to="/mall">额度商城</NavLink>
+          <NavLink to="/account">账号</NavLink>
           {user?.role === 'ADMIN' && <NavLink to="/admin">管理</NavLink>}
         </nav>
         <div className="topbar-right">
@@ -123,6 +131,7 @@ export default function App() {
               <Route path="/chat/:conversationId" element={<Chat />} />
               <Route path="/mall" element={<Mall />} />
               <Route path="/admin" element={<Admin />} />
+              <Route path="/account" element={<Account />} />
             </Route>
             <Route path="*" element={<Navigate to="/chat" replace />} />
           </Routes>

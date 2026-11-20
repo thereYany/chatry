@@ -4,7 +4,7 @@ set -euo pipefail
 # 本地启动 chatry（默认连本机 MySQL chatry_dev + Redis db0，mock 模型）
 cd "$(dirname "$0")/.."
 
-JAR="chatry-app/target/chatry-app-0.3.0-exec.jar"
+JAR="chatry-app/target/chatry-app-0.4.0-exec.jar"
 if [ ! -f "$JAR" ]; then
   echo "==> 构建 $JAR"
   mvn -B -q -DskipTests package
