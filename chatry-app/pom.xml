@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.wherelee</groupId>
+        <artifactId>chatry-parent</artifactId>
+        <version>0.1.0</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>chatry-app</artifactId>
+    <name>chatry-app（对话宿主与业务域）</name>
+    <description>对话 AI 宿主：只写垂直业务（会话/消息/额度），治理与计量走 atry 契约</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.wherelee</groupId>
+            <artifactId>atry-platform</artifactId>
+            <version>${atry.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.wherelee</groupId>
+            <artifactId>atry-contracts</artifactId>
+            <version>${atry.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.wherelee</groupId>
+            <artifactId>atry-identity</artifactId>
+            <version>${atry.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.wherelee</groupId>
+            <artifactId>atry-llm</artifactId>
+            <version>${atry.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.wherelee</groupId>
+            <artifactId>atry-metering</artifactId>
+            <version>${atry.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <classifier>exec</classifier>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

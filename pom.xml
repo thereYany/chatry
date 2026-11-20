@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.wherelee</groupId>
+        <artifactId>atry-parent</artifactId>
+        <version>0.1.0</version>
+        <relativePath/>
+    </parent>
+
+    <artifactId>chatry-parent</artifactId>
+    <packaging>pom</packaging>
+    <name>chatry</name>
+    <description>对话 AI 垂直应用：在 atry 内核之上做对话、额度与商城</description>
+
+    <modules>
+        <module>chatry-app</module>
+    </modules>
+
+    <properties>
+        <!-- atry 内核版本；内核升级时只改这一处 -->
+        <atry.version>0.1.0</atry.version>
+    </properties>
+</project>
