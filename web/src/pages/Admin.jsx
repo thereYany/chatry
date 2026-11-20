@@ -99,6 +99,7 @@ export default function Admin() {
         <div className="admin-tabs">
           <span className="ghost active">商品管理</span>
           <Link className="ghost" to="/admin/rbac">用户与权限</Link>
+          <Link className="ghost" to="/admin/audit">审计日志</Link>
         </div>
       </div>
 
