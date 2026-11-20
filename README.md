@@ -136,7 +136,7 @@ scripts/dev-run-deepseek.sh   # 读 ~/.config/atry/deepseek.env 或 DEEPSEEK_API
 
 实测（本机 20 并发抢 5 件）：**5 成功 / 15 售罄，库存归零，无超卖**；数据库订单数 = 5。脚本 `scripts/flash-concurrency.sh` 可复现。
 
-## 可观测性与错误契约（跟随 atry 0.5.0）
+## 可观测性与错误契约（跟随 atry 0.6.0）
 
 - 日志：`logback-spring.xml`（dev 文本 / prod JSON），每行带 traceId/userId/tenantId，消息脱敏；
   文件 `logs/chatry.log`、`logs/chatry-error.log`、`logs/chatry-access.log`
@@ -145,6 +145,8 @@ scripts/dev-run-deepseek.sh   # 读 ~/.config/atry/deepseek.env 或 DEEPSEEK_API
 - 错误体统一为 `code/message/traceId/path/timestamp/details`；LLM 错误码直接用内核分类
   （`QUOTA_EXHAUSTED` / `RATE_LIMITED` / `CANCELLED` ...），前端按 `code` 分支
 - 慢 SQL：`SLOW_SQL_ENABLED=true SLOW_SQL_THRESHOLD_MS=200`（默认关）
+- 审计保留：`t_auth_event` / `t_admin_audit_log` 默认保留 180 天，每天 03:20 分批清理（`AUDIT_RETENTION_DAYS`）
+- 用户管理读路径走 MyBatis（账号分页），并受 `MybatisTenantGuard` 的显式 tenant_id 校验保护
 - OpenAPI：本机 `http://127.0.0.1:8084/v3/api-docs`（公网 `/chatry/` 前缀下 Swagger UI 重定向不走前缀，以 JSON 为准）
 
 ## 测试

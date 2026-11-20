@@ -65,6 +65,12 @@ app:
         # 覆盖 @RateLimit 注解默认值（每 IP 每小时 10 次）
         limit: ${REGISTER_RATE_LIMIT:10}
         window-seconds: ${REGISTER_RATE_WINDOW_SECONDS:3600}
+  audit:
+    enabled: ${AUDIT_CLEANUP_ENABLED:true}
+    retention-days: ${AUDIT_RETENTION_DAYS:180}
+    batch-size: ${AUDIT_CLEANUP_BATCH_SIZE:1000}
+    max-batches: ${AUDIT_CLEANUP_MAX_BATCHES:10}
+    cron: ${AUDIT_CLEANUP_CRON:0 20 3 * * *}
   logging:
     access-log-enabled: ${LOG_ACCESS_ENABLED:true}
     access-log-slow-ms: ${ACCESS_LOG_SLOW_MS:1000}
