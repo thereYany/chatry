@@ -81,7 +81,15 @@ scripts/flash-concurrency.sh
 本机也可直接访问 http://127.0.0.1:8084/ 。演示账号 `demo / demo123456`，管理员 `admin / admin12345`（演示环境关闭强制改密）。
 反向代理配置见 [docs/deploy-nginx.md](docs/deploy-nginx.md)。
 
-接真实模型：`DEEPSEEK_ENABLED=true DEEPSEEK_API_KEY=... CHATRY_CHAT_MODEL=deepseek-flash`。
+默认是 `mock-small` 假模型（固定回 `mock-chunk-0…7`，不产生费用）。接真实 DeepSeek：
+
+```bash
+scripts/dev-run-deepseek.sh   # 读 ~/.config/atry/deepseek.env 或 DEEPSEEK_API_KEY
+```
+
+每条回复按真实 token 计费（输入 ¥2/M、输出 ¥8/M），一条短回复约 ¥0.0002–0.0005。切回 mock：不带 `DEEPSEEK_ENABLED` 重启即可。
+
+> ⚠️ 演示地址是公开的、demo 账密也写在页面提示里：接入真实 key 后，任何拿到地址的人都能消耗你的 DeepSeek 额度。对外分享前建议改 demo 密码或只在内测环境开真实模型。
 
 ## API
 
