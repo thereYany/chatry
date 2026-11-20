@@ -92,7 +92,15 @@ public class MallOrderRepository {
     public int markPaid(long tenantId, String orderNo, Instant paidAt) {
         return jdbc.update("""
                 UPDATE t_mall_order SET status = 'PAID', paid_at = ?
-                WHERE tenant_id = ? AND order_no = ? AND status <> 'PAID'
+                WHERE tenant_id = ? AND order_no = ? AND status IN ('CREATED', 'PAYING')
+                """, Timestamp.from(paidAt), tenantId, orderNo);
+    }
+
+    /** 支付成功撞上关单：不改回 PAID（额度不能入账），标记为待退款/人工处理。 */
+    public int markPaidAfterClose(long tenantId, String orderNo, Instant paidAt) {
+        return jdbc.update("""
+                UPDATE t_mall_order SET status = 'PAID_AFTER_CLOSE', paid_at = ?
+                WHERE tenant_id = ? AND order_no = ? AND status IN ('CLOSED', 'EXPIRED')
                 """, Timestamp.from(paidAt), tenantId, orderNo);
     }
 

@@ -82,7 +82,7 @@ function Layout() {
   if (!session) {
     return <Navigate to="/login" replace />;
   }
-  const balance = credits ? `¥${Number(credits.balance).toFixed(2)}` : '—';
+  const balance = credits ? `${Number(credits.balance).toFixed(2)} 额度` : '—';
 
   return (
     <div className="app">
@@ -97,7 +97,7 @@ function Layout() {
           {user?.role === 'ADMIN' && <NavLink to="/admin">管理</NavLink>}
         </nav>
         <div className="topbar-right">
-          <Link className="credits-badge" to="/mall" title="当前额度">
+          <Link className="credits-badge" to="/mall" title="当前可用额度（充值所得，非现金余额）">
             {balance}
           </Link>
           <span className="username">{user?.nickname || user?.username}</span>

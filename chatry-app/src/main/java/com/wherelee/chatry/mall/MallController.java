@@ -1,5 +1,6 @@
 package com.wherelee.chatry.mall;
 
+import com.wherelee.base.modules.platform.aop.Idempotent;
 import com.wherelee.base.modules.platform.common.BizException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -36,6 +37,7 @@ public class MallController {
     }
 
     @PostMapping("/orders")
+    @Idempotent(key = "mall:createOrder", windowSeconds = 3)
     public CreateOrderResponse createOrder(@RequestAttribute("tenantId") long tenantId,
                                            @RequestAttribute("userId") long userId,
                                            @Valid @RequestBody CreateOrderBody body) {
@@ -43,6 +45,7 @@ public class MallController {
     }
 
     @PostMapping("/orders/{orderNo}/mock-pay")
+    @Idempotent(key = "mall:mockPay", windowSeconds = 5)
     public PayResponse mockPay(@RequestAttribute("tenantId") long tenantId,
                                @RequestAttribute("userId") long userId,
                                @PathVariable String orderNo) {

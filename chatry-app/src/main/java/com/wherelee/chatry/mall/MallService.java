@@ -1,6 +1,7 @@
 package com.wherelee.chatry.mall;
 
 import com.wherelee.base.modules.contracts.payment.PaymentOperations;
+import com.wherelee.base.modules.payment.PaymentStatus;
 import com.wherelee.base.modules.payment.PaymentConfirmationService;
 import com.wherelee.base.modules.payment.PaymentNotification;
 import com.wherelee.base.modules.payment.outbox.PaymentOutboxDispatcher;
@@ -45,17 +46,20 @@ public class MallService {
     private final PaymentConfirmationService confirmation;
     private final PaymentOutboxDispatcher outbox;
     private final CreditService credits;
+    private final MockPaymentGuard mockPaymentGuard;
     private final MallProperties properties;
 
     public MallService(MallSkuRepository skus, MallOrderRepository orders, PaymentOperations payment,
                        PaymentConfirmationService confirmation, PaymentOutboxDispatcher outbox,
-                       CreditService credits, MallProperties properties) {
+                       CreditService credits, MockPaymentGuard mockPaymentGuard,
+                       MallProperties properties) {
         this.skus = skus;
         this.orders = orders;
         this.payment = payment;
         this.confirmation = confirmation;
         this.outbox = outbox;
         this.credits = credits;
+        this.mockPaymentGuard = mockPaymentGuard;
         this.properties = properties;
     }
 
@@ -139,11 +143,13 @@ public class MallService {
      * <p>真实渠道下由异步回调/主动查单触发，本接口只用于本地演示。</p>
      */
     public PayResponse mockPay(long tenantId, long userId, String orderNo) {
+        mockPaymentGuard.requireEnabled();
         MallOrder order = orders.findByNo(tenantId, orderNo)
                 .filter(found -> found.userId() == userId)
                 .orElseThrow(() -> BizException.notFound("订单不存在"));
-        if (MallOrder.STATUS_CLOSED.equals(order.status())) {
-            throw new BizException(HttpStatus.CONFLICT, "订单已关闭");
+        if (MallOrder.STATUS_CLOSED.equals(order.status())
+                || MallOrder.STATUS_PAID_AFTER_CLOSE.equals(order.status())) {
+            throw new BizException(HttpStatus.CONFLICT, "订单已关闭，不能支付");
         }
         BigDecimal balance = credits.balance(tenantId, userId).balance();
         if (MallOrder.STATUS_PAID.equals(order.status())) {
@@ -151,12 +157,30 @@ public class MallService {
         }
         PaymentOperations.PaymentView pay = payment.findByBiz(BIZ_TYPE, orderNo)
                 .orElseThrow(() -> BizException.notFound("支付单不存在"));
+        if (PaymentStatus.PAID.equals(pay.status())) {
+            // 支付单已成功但订单尚未履约（例如上一次 outbox 尚未处理），先推动一次再回读。
+            outbox.dispatchOnce();
+            MallOrder latest = orders.findByNo(tenantId, orderNo)
+                    .orElseThrow(() -> BizException.notFound("订单不存在"));
+            return new PayResponse(orderNo, latest.status(), credits.balance(tenantId, userId).balance());
+        }
+        if (!PaymentStatus.CREATED.equals(pay.status()) && !PaymentStatus.PAYING.equals(pay.status())) {
+            throw new BizException(HttpStatus.CONFLICT, "支付单状态 " + pay.status() + " 不允许支付");
+        }
         // 渠道通知词表是 PAYMENT_SUCCESS（不是发件箱事件码 PAYMENT_SUCCEEDED），与内核确认逻辑对齐
-        confirmation.accept(new PaymentNotification("MOCK", "DEV:" + orderNo + ":PAID", orderNo,
+        var confirmationResult = confirmation.accept(new PaymentNotification(
+                "MOCK", "DEV:" + orderNo + ":PAID", orderNo,
                 "PAYMENT_SUCCESS", pay.amountCents(), pay.providerTradeNo(), null));
+        if (!confirmationResult.success()) {
+            throw new BizException(HttpStatus.CONFLICT, confirmationResult.message());
+        }
         outbox.dispatchOnce();
         MallOrder latest = orders.findByNo(tenantId, orderNo)
                 .orElseThrow(() -> BizException.notFound("订单不存在"));
+        if (!MallOrder.STATUS_PAID.equals(latest.status())
+                && !MallOrder.STATUS_PAID_AFTER_CLOSE.equals(latest.status())) {
+            throw new BizException(HttpStatus.CONFLICT, "订单状态异常：" + latest.status());
+        }
         return new PayResponse(orderNo, latest.status(), credits.balance(tenantId, userId).balance());
     }
 

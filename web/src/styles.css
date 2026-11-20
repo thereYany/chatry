@@ -715,9 +715,21 @@ label {
 }
 
 .sku-credit {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--primary-strong);
+}
+
+.sku-credit small {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.sku-credit strong {
   font-size: 26px;
   font-weight: 700;
-  color: var(--primary-strong);
 }
 
 .sku-price {
@@ -773,6 +785,11 @@ label {
 .status.created {
   background: #fff4e5;
   color: var(--warning);
+}
+
+.status.paid_after_close {
+  color: #b45309;
+  background: #fef3c7;
 }
 
 .status.closed,

@@ -6,6 +6,15 @@ function yuan(cents) {
   return `¥${(Number(cents) / 100).toFixed(2)}`;
 }
 
+function credit(cents) {
+  return (Number(cents) / 100).toFixed(2);
+}
+
+function bonusOf(sku) {
+  const paid = sku.effectivePriceCents ?? sku.priceCents;
+  return Math.max(0, Number(sku.creditCents) - Number(paid));
+}
+
 function useCountdown(target) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -75,7 +84,13 @@ export default function Mall() {
     try {
       const result = await api(`/api/mall/orders/${pending.orderNo}/mock-pay`, { method: 'POST', token });
       setPending({ ...pending, status: result.status, balance: result.balance });
-      setNotice(`支付成功，额度已到账，当前余额 ${yuan(Number(result.balance) * 100)}`);
+      if (result.status === 'PAID') {
+        const bonus = Math.max(0, Number(pending.creditCents) - Number(pending.amountCents));
+        setNotice(`充值成功：支付 ${yuan(pending.amountCents)}，到账 ${credit(pending.creditCents)} 额度`
+          + (bonus > 0 ? `（含赠送 ${yuan(bonus)}）` : ''));
+      } else {
+        setNotice('支付已完成，但订单已关闭，额度未入账，请联系管理员处理');
+      }
       refresh();
       load();
     } catch (e) {
@@ -90,11 +105,11 @@ export default function Mall() {
       <div className="page-head">
         <div>
           <h1>额度商城</h1>
-          <p className="muted">额度即余额：购买后按 token 实际成本扣减。演示环境使用模拟支付。</p>
+          <p className="muted">充值额度用于对话，按 token 实际成本扣减；额度不是现金余额。演示环境使用模拟支付。</p>
         </div>
         <div className="balance-card">
-          <span className="muted">当前额度</span>
-          <strong>{credits ? yuan(Number(credits.balance) * 100) : '—'}</strong>
+          <span className="muted">当前可用额度</span>
+          <strong>{credits ? `${Number(credits.balance).toFixed(2)} 额度` : '—'}</strong>
         </div>
       </div>
 
@@ -118,7 +133,7 @@ export default function Mall() {
       <section>
         <div className="section-title">
           <h2>额度包</h2>
-          <span className="muted">按需购买，即买即用</span>
+          <span className="muted">按需充值，即充即用</span>
         </div>
         <div className="sku-grid">
           {normalSkus.map((sku) => (
@@ -127,13 +142,19 @@ export default function Mall() {
                 <h3>{sku.title}</h3>
                 {sku.description && <p className="muted small">{sku.description}</p>}
               </header>
-              <div className="sku-credit">{yuan(sku.creditCents)}</div>
+              <div className="sku-credit">
+                <small>到账额度</small>
+                <strong>{credit(sku.creditCents)}</strong>
+              </div>
               <div className="sku-price">
-                <span>{yuan(sku.priceCents)}</span>
+                <span>支付 {yuan(sku.priceCents)}</span>
                 {sku.flashPriceCents != null && <s>{yuan(sku.priceCents)}</s>}
               </div>
+              {bonusOf(sku) > 0 && (
+                <p className="muted small">含赠送 {yuan(bonusOf(sku))}</p>
+              )}
               <button type="button" className="primary" disabled={busy} onClick={() => buy(sku)}>
-                立即购买
+                立即充值
               </button>
             </article>
           ))}
@@ -149,7 +170,7 @@ export default function Mall() {
           <div className="order-row order-head">
             <span>订单号</span>
             <span>商品</span>
-            <span>实付</span>
+            <span>支付金额</span>
             <span>到账额度</span>
             <span>状态</span>
           </div>
@@ -158,7 +179,7 @@ export default function Mall() {
               <span className="mono">{order.orderNo}</span>
               <span>{order.skuTitle}</span>
               <span>{yuan(order.amountCents)}</span>
-              <span>{yuan(order.creditCents)}</span>
+              <span>{credit(order.creditCents)} 额度</span>
               <span className={`status ${order.status.toLowerCase()}`}>{statusText(order.status)}</span>
             </div>
           ))}
@@ -169,19 +190,22 @@ export default function Mall() {
       {pending && (
         <div className="modal-backdrop" onClick={() => !busy && setPending(null)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h2>{pending.status === 'PAID' ? '支付成功' : '确认订单'}</h2>
+            <h2>{pending.status === 'PAID' ? '充值成功' : '确认充值'}</h2>
             <dl className="order-detail">
               <div>
                 <dt>订单号</dt>
                 <dd className="mono">{pending.orderNo}</dd>
               </div>
               <div>
-                <dt>实付</dt>
+                <dt>支付金额</dt>
                 <dd>{yuan(pending.amountCents)}</dd>
               </div>
               <div>
                 <dt>到账额度</dt>
-                <dd>{yuan(pending.creditCents)}</dd>
+                <dd>{credit(pending.creditCents)} 额度
+                  {Math.max(0, Number(pending.creditCents) - Number(pending.amountCents)) > 0
+                    && `（含赠送 ${yuan(Math.max(0, pending.creditCents - pending.amountCents))}）`}
+                </dd>
               </div>
               <div>
                 <dt>状态</dt>
@@ -200,7 +224,7 @@ export default function Mall() {
                   取消
                 </button>
                 <button type="button" className="primary" onClick={pay} disabled={busy}>
-                  {busy ? '支付中…' : '模拟支付（演示）'}
+                  {busy ? '支付中…' : '确认模拟支付（演示）'}
                 </button>
               </div>
             )}
@@ -224,7 +248,7 @@ function FlashCard({ sku, busy, onBuy }) {
         <strong>{yuan(sku.effectivePriceCents)}</strong>
         <s>{yuan(sku.priceCents)}</s>
       </div>
-      <p className="muted">到账额度 {yuan(sku.creditCents)}</p>
+      <p className="muted">到账额度 {credit(sku.creditCents)}</p>
       <div className="flash-meta">
         <span>剩余 {sku.stock < 0 ? '不限量' : `${sku.stock} 份`}</span>
         <span>每人限 {sku.perUserLimit > 0 ? `${sku.perUserLimit} 份` : '不限'}</span>
@@ -242,6 +266,7 @@ function statusText(status) {
       CREATED: '待支付',
       PAYING: '待支付',
       PAID: '已支付',
+      PAID_AFTER_CLOSE: '已支付·待处理',
       CLOSED: '已关闭',
     }[status] || status
   );
