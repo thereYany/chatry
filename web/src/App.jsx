@@ -23,13 +23,23 @@ function AuthProvider({ children }) {
     return result;
   }, []);
 
+  const register = useCallback(async ({ username, password, nickname, email }) => {
+    const result = await api('/api/auth/register', {
+      method: 'POST',
+      body: { username, password, nickname, email: email || null },
+    });
+    setSession(result);
+    setSessionState(result);
+    return result;
+  }, []);
+
   const logout = useCallback(() => {
     clearSession();
     setSessionState(null);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ session, token: session?.token, user: session?.user, login, logout }}>
+    <AuthContext.Provider value={{ session, token: session?.token, user: session?.user, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

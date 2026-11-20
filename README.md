@@ -12,6 +12,10 @@
 |---|---|
 | ![下单](docs/screenshots/buy.png) | ![管理](docs/screenshots/admin.png) |
 
+| 自助注册（用户名/密码/昵称/邮箱） |
+|---|
+| ![注册](docs/screenshots/register.png) |
+
 ## 能力清单
 
 | 模块 | 能力 |
@@ -21,7 +25,7 @@
 | 商城 | 三档额度包；下单 → 支付（mock）→ 支付成功事件 → 幂等充值到账；订单列表；每人限购 |
 | 秒杀 | 管理员配置限时秒杀品（低价/大额/限量/限购）；条件更新扣库存防超卖；未支付 15 分钟关单回补；并发压测脚本 |
 | 管理 | 建品、秒杀配置、上下架；ADMIN 角色接口鉴权 |
-| 账号 | JWT 登录、RBAC；demo 与 admin 演示账号 |
+| 账号 | JWT 登录、**自助注册（用户名/密码/昵称/邮箱，无验证码）**、注册 IP 频控、认证审计；demo/admin 演示账号 |
 
 ## 架构
 
@@ -120,7 +124,7 @@ scripts/dev-run-deepseek.sh   # 读 ~/.config/atry/deepseek.env 或 DEEPSEEK_API
 
 实测（本机 20 并发抢 5 件）：**5 成功 / 15 售罄，库存归零，无超卖**；数据库订单数 = 5。脚本 `scripts/flash-concurrency.sh` 可复现。
 
-## 可观测性与错误契约（跟随 atry 0.2.0）
+## 可观测性与错误契约（跟随 atry 0.3.0）
 
 - 日志：`logback-spring.xml`（dev 文本 / prod JSON），每行带 traceId/userId/tenantId，消息脱敏；
   文件 `logs/chatry.log`、`logs/chatry-error.log`、`logs/chatry-access.log`
@@ -134,7 +138,7 @@ scripts/dev-run-deepseek.sh   # 读 ~/.config/atry/deepseek.env 或 DEEPSEEK_API
 ## 测试
 
 ```bash
-mvn -B test        # 14 个用例：上下文截断、取消落库、成本换算、秒杀扣减/售罄/限购/时间窗、订单归属
+mvn -B test        # 18 个用例：上下文截断、取消落库、成本换算、秒杀扣减/售罄/限购/时间窗、订单归属
 ```
 
 ## 已知限制

@@ -168,6 +168,7 @@ logging:
     com.wherelee.chatry: info
 
 springdoc:
+  pre-loading-enabled: true
   api-docs:
     path: /v3/api-docs
     enabled: ${SPRINGDOC_ENABLED:true}

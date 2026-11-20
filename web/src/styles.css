@@ -287,6 +287,29 @@ label {
   letter-spacing: -0.03em;
 }
 
+.auth-tabs {
+  display: flex;
+  gap: 4px;
+  margin-top: 18px;
+  padding: 4px;
+  background: var(--surface-2);
+  border-radius: 10px;
+}
+
+.auth-tabs button {
+  flex: 1;
+  padding: 7px 12px;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.auth-tabs button.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 4px rgba(23, 33, 71, 0.08);
+}
+
 .login-card form {
   display: flex;
   flex-direction: column;
