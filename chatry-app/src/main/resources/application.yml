@@ -59,6 +59,12 @@ app:
     ttl-minutes: ${JWT_TTL_MINUTES:10080}
     issuer: ${JWT_ISSUER:atry}
     audience: ${JWT_AUDIENCE:chatry-web}
+  rate-limit:
+    auth:
+      register:
+        # 覆盖 @RateLimit 注解默认值（每 IP 每小时 10 次）
+        limit: ${REGISTER_RATE_LIMIT:10}
+        window-seconds: ${REGISTER_RATE_WINDOW_SECONDS:3600}
   logging:
     access-log-enabled: ${LOG_ACCESS_ENABLED:true}
     access-log-slow-ms: ${ACCESS_LOG_SLOW_MS:1000}

@@ -16,6 +16,10 @@
 |---|---|
 | ![注册](docs/screenshots/register.png) | ![会话](docs/screenshots/sessions.png) |
 
+| 管理端：用户与权限（RBAC） |
+|---|
+| ![RBAC](docs/screenshots/admin-rbac.png) |
+
 ## 能力清单
 
 | 模块 | 能力 |
@@ -24,7 +28,7 @@
 | 额度 | 额度 = atry 计量账户余额；按 token 实际成本预扣/结算；新手赠送；额度页估算可聊次数 |
 | 商城 | 三档额度包；下单 → 支付（mock）→ 支付成功事件 → 幂等充值到账；订单列表；每人限购 |
 | 秒杀 | 管理员配置限时秒杀品（低价/大额/限量/限购）；条件更新扣库存防超卖；未支付 15 分钟关单回补；并发压测脚本 |
-| 管理 | 建品、秒杀配置、上下架；ADMIN 角色接口鉴权 |
+| 管理 | 商城：建品/秒杀/上下架；权限：用户列表、禁用/重置密码、分配角色、角色/权限创建与编辑；ADMIN 接口鉴权 |
 | 账号 | JWT 登录、**自助注册（用户名/密码/昵称/邮箱，无验证码）**、注册 IP 频控、认证审计、**会话列表/单会话踢下线**；demo/admin 演示账号 |
 
 ## 架构
@@ -112,6 +116,14 @@ scripts/dev-run-deepseek.sh   # 读 ~/.config/atry/deepseek.env 或 DEEPSEEK_API
 | POST | `/api/mall/orders/{orderNo}/mock-pay` | 模拟支付（演示渠道） |
 | GET | `/api/mall/orders` | 我的订单 |
 | GET | `/api/admin/mall/skus` | 全部商品（ADMIN） |
+| GET | `/api/admin/users` | 用户分页（ADMIN，支持 keyword/role/status） |
+| PUT | `/api/admin/users/{id}/status` | 禁用/启用 |
+| PUT | `/api/admin/users/{id}/password` | 重置密码（踢下线） |
+| PUT | `/api/admin/users/{id}/roles` | 分配角色 |
+| GET | `/api/admin/roles` | 角色列表 |
+| GET | `/api/admin/permissions` | 权限点列表 |
+| POST | `/api/admin/roles` | 创建角色（含权限） |
+| PUT | `/api/admin/roles/{code}/permissions` | 更新角色权限（多实例广播） |
 | POST | `/api/admin/mall/skus` | 建品/秒杀配置（ADMIN） |
 | PUT | `/api/admin/mall/skus/{id}/status` | 上下架（ADMIN） |
 
@@ -124,7 +136,7 @@ scripts/dev-run-deepseek.sh   # 读 ~/.config/atry/deepseek.env 或 DEEPSEEK_API
 
 实测（本机 20 并发抢 5 件）：**5 成功 / 15 售罄，库存归零，无超卖**；数据库订单数 = 5。脚本 `scripts/flash-concurrency.sh` 可复现。
 
-## 可观测性与错误契约（跟随 atry 0.3.0）
+## 可观测性与错误契约（跟随 atry 0.5.0）
 
 - 日志：`logback-spring.xml`（dev 文本 / prod JSON），每行带 traceId/userId/tenantId，消息脱敏；
   文件 `logs/chatry.log`、`logs/chatry-error.log`、`logs/chatry-access.log`

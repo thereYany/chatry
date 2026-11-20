@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAuth } from '../App.jsx';
 
@@ -94,6 +95,10 @@ export default function Admin() {
         <div>
           <h1>商城管理</h1>
           <p className="muted">创建额度包与秒杀品、上下架。秒杀库存按条件更新扣减，售罄即止。</p>
+        </div>
+        <div className="admin-tabs">
+          <span className="ghost active">商品管理</span>
+          <Link className="ghost" to="/admin/rbac">用户与权限</Link>
         </div>
       </div>
 
