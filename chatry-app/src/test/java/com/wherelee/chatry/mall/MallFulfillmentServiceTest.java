@@ -1,0 +1,67 @@
+package com.wherelee.chatry.mall;
+
+import com.wherelee.base.modules.contracts.metering.MeteringAdminOperations;
+import com.wherelee.base.modules.contracts.metering.RechargeCommand;
+import com.wherelee.base.modules.platform.common.BizException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.Instant;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class MallFulfillmentServiceTest {
+
+    @Mock
+    private MallOrderRepository orders;
+    @Mock
+    private MeteringAdminOperations meteringAdmin;
+
+    private MallFulfillmentService service;
+
+    @BeforeEach
+    void setUp() {
+        service = new MallFulfillmentService(orders, meteringAdmin);
+    }
+
+    @Test
+    void rechargesCreditsWithIdempotentBizNoAndMarksPaid() {
+        MallOrder order = new MallOrder(1, 0, "M261121000001ABC", 9, 4, "秒杀", 190, 3000,
+                MallOrder.STATUS_PAYING, "P-1", true, Instant.now().plusSeconds(600), null, Instant.now());
+        when(orders.findByNo(0, "M261121000001ABC")).thenReturn(Optional.of(order));
+
+        service.fulfil(0, "M261121000001ABC");
+
+        ArgumentCaptor<RechargeCommand> captor = ArgumentCaptor.forClass(RechargeCommand.class);
+        verify(meteringAdmin).recharge(captor.capture());
+        RechargeCommand command = captor.getValue();
+        assertThat(command.amount()).isEqualByComparingTo("30.00");
+        assertThat(command.currency()).isEqualTo("CNY");
+        assertThat(command.bizNo()).isEqualTo("mall:M261121000001ABC");
+        assertThat(command.subject().userId()).isEqualTo(9);
+        verify(orders).markPaid(eq(0L), eq("M261121000001ABC"), any(Instant.class));
+    }
+
+    @Test
+    void missingOrderFailsSoOutboxCanRetry() {
+        when(orders.findByNo(0, "M404")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.fulfil(0, "M404"))
+                .isInstanceOf(IllegalStateException.class);
+        verify(meteringAdmin, never()).recharge(any());
+        verify(orders, never()).markPaid(anyLong(), any(), any(Instant.class));
+    }
+}

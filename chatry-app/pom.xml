@@ -41,6 +41,11 @@
             <artifactId>atry-metering</artifactId>
             <version>${atry.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.wherelee</groupId>
+            <artifactId>atry-payment</artifactId>
+            <version>${atry.version}</version>
+        </dependency>
     </dependencies>
 
     <build>

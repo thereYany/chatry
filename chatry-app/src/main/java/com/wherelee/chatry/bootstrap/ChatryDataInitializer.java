@@ -43,8 +43,8 @@ public class ChatryDataInitializer implements ApplicationRunner {
         String adminPassword = seed.adminPassword();
         boolean generated = adminPassword == null || adminPassword.isBlank();
         String password = generated ? PasswordGenerator.generate() : adminPassword;
-        if (ensureUser("admin", password, "管理员", ADMIN_ROLE, true) && generated) {
-            log.warn("已创建管理员 admin，随机初始密码={}（仅本次启动打印，首次登录必须改密）", password);
+        if (ensureUser("admin", password, "管理员", ADMIN_ROLE, false) && generated) {
+            log.warn("已创建管理员 admin，随机初始密码={}（仅本次启动打印；演示环境已关闭强制改密）", password);
         }
 
         if (seed.demoUserEnabled()) {

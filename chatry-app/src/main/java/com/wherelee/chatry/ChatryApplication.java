@@ -5,6 +5,7 @@ import com.wherelee.base.modules.llm.provider.deepseek.DeepSeekProperties;
 import com.wherelee.chatry.bootstrap.ChatrySeedProperties;
 import com.wherelee.chatry.chat.ChatProperties;
 import com.wherelee.chatry.credits.CreditProperties;
+import com.wherelee.chatry.mall.MallProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -20,10 +21,11 @@ import org.springframework.scheduling.annotation.EnableScheduling;
         "com.wherelee.chatry",
         "com.wherelee.base.modules.identity",
         "com.wherelee.base.modules.llm",
-        "com.wherelee.base.modules.metering"
+        "com.wherelee.base.modules.metering",
+        "com.wherelee.base.modules.payment"
 })
 @EnableConfigurationProperties({LlmProperties.class, DeepSeekProperties.class,
-        ChatProperties.class, CreditProperties.class, ChatrySeedProperties.class})
+        ChatProperties.class, CreditProperties.class, ChatrySeedProperties.class, MallProperties.class})
 @EnableScheduling
 public class ChatryApplication {
 

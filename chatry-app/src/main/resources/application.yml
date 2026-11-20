@@ -23,8 +23,11 @@ spring:
       timeout: 2s
   flyway:
     enabled: true
+    # 内核模块版本段（V1xx-V5xx）与垂直段（V9xx）并存：允许后加的内核迁移补跑，
+    # 避免「垂直段已执行、内核新增迁移被判 out-of-order」而拒绝启动。
+    out-of-order: true
     # 内核表由 atry 各模块 jar 自带迁移；垂直表在 chatry 目录（V9xx 段）
-    locations: classpath:db/migration/platform,classpath:db/migration/identity,classpath:db/migration/llm,classpath:db/migration/metering,classpath:db/migration/chatry
+    locations: classpath:db/migration/platform,classpath:db/migration/identity,classpath:db/migration/payment,classpath:db/migration/llm,classpath:db/migration/metering,classpath:db/migration/chatry
   task:
     scheduling:
       pool:
@@ -56,6 +59,27 @@ app:
     ttl-minutes: ${JWT_TTL_MINUTES:10080}
     issuer: ${JWT_ISSUER:atry}
     audience: ${JWT_AUDIENCE:chatry-web}
+  payment:
+    provider: ${PAYMENT_PROVIDER:mock}
+    app-id: ${PAYMENT_APP_ID:chatry}
+    mock-enabled: ${PAYMENT_MOCK_ENABLED:true}
+    mock-secret: ${PAYMENT_MOCK_SECRET:chatry-mock-payment-secret-change-before-production}
+    order-expire-minutes: ${PAYMENT_ORDER_EXPIRE_MINUTES:15}
+    query-after-seconds: ${PAYMENT_QUERY_AFTER_SECONDS:15}
+    reconcile-batch-size: ${PAYMENT_RECONCILE_BATCH_SIZE:20}
+    reconcile-interval-ms: ${PAYMENT_RECONCILE_INTERVAL_MS:3600000}
+    reconcile-initial-delay-ms: ${PAYMENT_RECONCILE_INITIAL_DELAY_MS:3600000}
+    refund-max-attempts: ${PAYMENT_REFUND_MAX_ATTEMPTS:5}
+    refund-retry-base-seconds: ${PAYMENT_REFUND_RETRY_BASE_SECONDS:30}
+    query:
+      enabled: ${PAYMENT_QUERY_ENABLED:false}
+      interval-ms: ${PAYMENT_QUERY_INTERVAL_MS:30000}
+      initial-delay-ms: ${PAYMENT_QUERY_INITIAL_DELAY_MS:15000}
+      batch-size: ${PAYMENT_QUERY_BATCH_SIZE:20}
+    outbox:
+      interval-ms: ${PAYMENT_OUTBOX_INTERVAL_MS:5000}
+      initial-delay-ms: ${PAYMENT_OUTBOX_INITIAL_DELAY_MS:10000}
+      reclaim-after-seconds: ${PAYMENT_OUTBOX_RECLAIM_AFTER_SECONDS:120}
   storage:
     enabled: false
   invitation:
@@ -147,6 +171,9 @@ logging:
     com.wherelee.chatry: info
 
 chatry:
+  mall:
+    # 未支付订单关单并回补库存的时限
+    order-expire-minutes: ${CHATRY_MALL_ORDER_EXPIRE_MINUTES:15}
   credits:
     # 新用户首次对话自动赠送的额度（CNY）；买了额度包后由商城走幂等充值加钱
     initial-grant: ${CHATRY_INITIAL_GRANT:5.000000}
