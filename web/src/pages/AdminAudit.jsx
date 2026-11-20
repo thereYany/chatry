@@ -65,6 +65,7 @@ export default function AdminAudit() {
           <Link className="ghost" to="/admin">商品管理</Link>
           <Link className="ghost" to="/admin/rbac">用户与权限</Link>
           <span className="ghost active">审计日志</span>
+          <Link className="ghost" to="/admin/finance">资金账本</Link>
         </div>
       </div>
 

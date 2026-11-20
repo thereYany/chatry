@@ -1,12 +1,15 @@
 package com.wherelee.chatry.credits;
 
 import com.wherelee.chatry.chat.ChatProperties;
+import com.wherelee.chatry.ledger.FundLedgerService;
 import com.wherelee.base.modules.contracts.llm.LlmUsage;
 import com.wherelee.base.modules.contracts.metering.BalanceView;
 import com.wherelee.base.modules.contracts.metering.MeteringAdminOperations;
 import com.wherelee.base.modules.contracts.metering.MeteringOperations;
 import com.wherelee.base.modules.contracts.metering.RechargeCommand;
 import com.wherelee.base.modules.contracts.metering.SubjectRef;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +27,7 @@ import java.util.Map;
 @Service
 public class CreditService {
 
+    private static final Logger log = LoggerFactory.getLogger(CreditService.class);
     private static final long APP_ID = 0L;
     private static final String INPUT_METER = "llm.input_tokens";
     private static final String OUTPUT_METER = "llm.output_tokens";
@@ -33,13 +37,16 @@ public class CreditService {
     private final MeteringAdminOperations meteringAdmin;
     private final CreditProperties properties;
     private final ChatProperties chatProperties;
+    private final FundLedgerService fundLedger;
 
     public CreditService(MeteringOperations metering, MeteringAdminOperations meteringAdmin,
-                         CreditProperties properties, ChatProperties chatProperties) {
+                         CreditProperties properties, ChatProperties chatProperties,
+                         FundLedgerService fundLedger) {
         this.metering = metering;
         this.meteringAdmin = meteringAdmin;
         this.properties = properties;
         this.chatProperties = chatProperties;
+        this.fundLedger = fundLedger;
     }
 
     public SubjectRef subject(long tenantId, long userId) {
@@ -59,6 +66,13 @@ public class CreditService {
                     properties.currency(), "chatry-grant:" + tenantId + ":" + userId));
         } catch (DuplicateKeyException ignored) {
             // 另一线程已完成首次赠送
+        }
+        try {
+            fundLedger.postInitialGrant(tenantId, userId, properties.initialGrant(),
+                    "chatry-grant:" + tenantId + ":" + userId);
+        } catch (RuntimeException e) {
+            log.warn("新手额度资金分录失败 tenantId={} userId={}：{}", tenantId, userId,
+                    e.getClass().getSimpleName());
         }
         return balance(tenantId, userId);
     }

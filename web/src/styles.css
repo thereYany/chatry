@@ -850,6 +850,61 @@ label {
   gap: 10px;
 }
 
+/* ---------- 管理端：资金账本 ---------- */
+
+.fund-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.fund-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+
+.fund-card strong {
+  font-size: 20px;
+  color: var(--primary-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.fund-checks {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.fund-check {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  font-size: 13px;
+  border: 1px solid var(--border);
+}
+
+.fund-check.ok {
+  color: #15803d;
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.fund-check.bad {
+  color: #b91c1c;
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
 /* ---------- 管理端：审计 ---------- */
 
 .tabs-line {

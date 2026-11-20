@@ -11,6 +11,7 @@ import com.wherelee.base.modules.contracts.llm.LlmStreamSink;
 import com.wherelee.base.modules.contracts.llm.LlmUsage;
 import com.wherelee.base.modules.platform.common.BizException;
 import com.wherelee.chatry.credits.ChatBalanceView;
+import com.wherelee.chatry.ledger.FundLedgerService;
 import com.wherelee.chatry.credits.CreditService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,16 +48,18 @@ public class ChatService {
     private final CreditService credits;
     private final LlmOperations llm;
     private final ChatProperties properties;
+    private final FundLedgerService fundLedger;
 
     public ChatService(ChatConversationRepository conversations, ChatMessageRepository messages,
                        ChatContextBuilder contextBuilder, CreditService credits,
-                       LlmOperations llm, ChatProperties properties) {
+                       LlmOperations llm, ChatProperties properties, FundLedgerService fundLedger) {
         this.conversations = conversations;
         this.messages = messages;
         this.contextBuilder = contextBuilder;
         this.credits = credits;
         this.llm = llm;
         this.properties = properties;
+        this.fundLedger = fundLedger;
     }
 
     public ConversationView create(long tenantId, long userId, String title) {
@@ -108,6 +111,7 @@ public class ChatService {
                 response.provider(), response.modelServed(), response.finishReason(),
                 ChatMessageRepository.STATUS_OK);
         conversations.refresh(tenantId, conversationId, Instant.now());
+        syncUsage(prepared.requestId());
         ChatBalanceView balance = credits.balance(tenantId, userId);
         long latencyMs = System.currentTimeMillis() - startedAt;
         log.info("chat.reply tenantId={} userId={} conversationId={} requestId={} provider={} model={} "
@@ -166,6 +170,7 @@ public class ChatService {
                 (int) usage.cachedReadTokens(), CreditService.micros(cost), prepared.requestId(),
                 null, prepared.model(), finishRef.get(), ChatMessageRepository.STATUS_OK);
         conversations.refresh(tenantId, conversationId, Instant.now());
+        syncUsage(prepared.requestId());
         ChatBalanceView balance = credits.balance(tenantId, userId);
         long latencyMs = System.currentTimeMillis() - startedAt;
         log.info("chat.stream.reply tenantId={} userId={} conversationId={} requestId={} model={} "
@@ -174,6 +179,14 @@ public class ChatService {
                 latencyMs, usage.totalTokens(), cost, balance.balance());
         return new ChatResult(assistantMessageId, generated.toString(), ChatUsageView.from(usage), cost,
                 balance.currency(), balance, null, prepared.model(), finishRef.get(), latencyMs);
+    }
+
+    private void syncUsage(String requestId) {
+        try {
+            fundLedger.syncUsage("settle:llm:" + requestId);
+        } catch (RuntimeException e) {
+            log.warn("资金账本用量分录失败 requestId={}", requestId, e);
+        }
     }
 
     // ---------- 内部 ----------

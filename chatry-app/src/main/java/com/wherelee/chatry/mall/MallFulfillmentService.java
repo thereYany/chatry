@@ -3,6 +3,7 @@ package com.wherelee.chatry.mall;
 import com.wherelee.base.modules.contracts.metering.MeteringAdminOperations;
 import com.wherelee.base.modules.contracts.metering.RechargeCommand;
 import com.wherelee.base.modules.contracts.metering.SubjectRef;
+import com.wherelee.chatry.ledger.FundLedgerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -24,10 +25,13 @@ public class MallFulfillmentService {
 
     private final MallOrderRepository orders;
     private final MeteringAdminOperations meteringAdmin;
+    private final FundLedgerService fundLedger;
 
-    public MallFulfillmentService(MallOrderRepository orders, MeteringAdminOperations meteringAdmin) {
+    public MallFulfillmentService(MallOrderRepository orders, MeteringAdminOperations meteringAdmin,
+                                  FundLedgerService fundLedger) {
         this.orders = orders;
         this.meteringAdmin = meteringAdmin;
+        this.fundLedger = fundLedger;
     }
 
     /**
@@ -66,6 +70,7 @@ public class MallFulfillmentService {
         BigDecimal credit = BigDecimal.valueOf(order.creditCents(), 2);
         meteringAdmin.recharge(new RechargeCommand(
                 new SubjectRef(tenantId, 0L, order.userId()), credit, "CNY", "mall:" + orderNo));
+        fundLedger.postTopUp(tenantId, order.userId(), order.amountCents(), order.creditCents(), orderNo);
         log.info("mall.order.paid tenantId={} orderNo={} userId={} credit={}",
                 tenantId, orderNo, order.userId(), credit);
     }

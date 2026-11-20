@@ -10,6 +10,7 @@ import com.wherelee.base.modules.contracts.llm.LlmStreamSink;
 import com.wherelee.base.modules.contracts.llm.LlmUsage;
 import com.wherelee.chatry.credits.ChatBalanceView;
 import com.wherelee.chatry.credits.CreditService;
+import com.wherelee.chatry.ledger.FundLedgerService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -51,6 +52,8 @@ class ChatServiceTest {
     private CreditService credits;
     @Mock
     private LlmOperations llm;
+    @Mock
+    private FundLedgerService fundLedger;
 
     private ChatService service;
 
@@ -58,7 +61,8 @@ class ChatServiceTest {
     void setUp() {
         ChatProperties properties = new ChatProperties(
                 "mock-small", 256, 20, 12_000, 30, 120, 60_000L, 20);
-        service = new ChatService(conversations, messages, contextBuilder, credits, llm, properties);
+        service = new ChatService(conversations, messages, contextBuilder, credits, llm, properties,
+                fundLedger);
     }
 
     @Test

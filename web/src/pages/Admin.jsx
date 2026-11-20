@@ -100,6 +100,7 @@ export default function Admin() {
           <span className="ghost active">商品管理</span>
           <Link className="ghost" to="/admin/rbac">用户与权限</Link>
           <Link className="ghost" to="/admin/audit">审计日志</Link>
+          <Link className="ghost" to="/admin/finance">资金账本</Link>
         </div>
       </div>
 

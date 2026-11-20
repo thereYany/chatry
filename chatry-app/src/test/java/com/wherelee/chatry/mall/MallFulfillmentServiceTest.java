@@ -3,6 +3,7 @@ package com.wherelee.chatry.mall;
 import com.wherelee.base.modules.contracts.metering.MeteringAdminOperations;
 import com.wherelee.base.modules.contracts.metering.RechargeCommand;
 import com.wherelee.base.modules.platform.common.BizException;
+import com.wherelee.chatry.ledger.FundLedgerService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,12 +30,14 @@ class MallFulfillmentServiceTest {
     private MallOrderRepository orders;
     @Mock
     private MeteringAdminOperations meteringAdmin;
+    @Mock
+    private FundLedgerService fundLedger;
 
     private MallFulfillmentService service;
 
     @BeforeEach
     void setUp() {
-        service = new MallFulfillmentService(orders, meteringAdmin);
+        service = new MallFulfillmentService(orders, meteringAdmin, fundLedger);
     }
 
     @Test
@@ -54,6 +57,7 @@ class MallFulfillmentServiceTest {
         assertThat(command.bizNo()).isEqualTo("mall:M261121000001ABC");
         assertThat(command.subject().userId()).isEqualTo(9);
         verify(orders).markPaid(eq(0L), eq("M261121000001ABC"), any(Instant.class));
+        verify(fundLedger).postTopUp(0L, 9L, 190L, 3000L, "M261121000001ABC");
     }
 
 

@@ -152,6 +152,7 @@ export default function AdminRbac() {
           <Link className="ghost" to="/admin">商品管理</Link>
           <span className="ghost active">用户与权限</span>
           <Link className="ghost" to="/admin/audit">审计日志</Link>
+          <Link className="ghost" to="/admin/finance">资金账本</Link>
         </div>
       </div>
 

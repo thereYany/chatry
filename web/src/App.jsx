@@ -9,6 +9,7 @@ import Admin from './pages/Admin.jsx';
 import Account from './pages/Account.jsx';
 import AdminRbac from './pages/AdminRbac.jsx';
 import AdminAudit from './pages/AdminAudit.jsx';
+import AdminFinance from './pages/AdminFinance.jsx';
 
 const AuthContext = createContext(null);
 const CreditsContext = createContext(null);
@@ -135,6 +136,7 @@ export default function App() {
               <Route path="/admin" element={<Admin />} />
               <Route path="/admin/rbac" element={<AdminRbac />} />
               <Route path="/admin/audit" element={<AdminAudit />} />
+              <Route path="/admin/finance" element={<AdminFinance />} />
               <Route path="/account" element={<Account />} />
             </Route>
             <Route path="*" element={<Navigate to="/chat" replace />} />
