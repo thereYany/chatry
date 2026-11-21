@@ -9,12 +9,12 @@ jobs:
   backend:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           path: chatry
       # chatry 依赖 atry 内核（com.wherelee:atry-*），内核尚未发布到公共仓库，
       # CI 里按版本先构建安装一次，保证「垂直仓 + 对应内核版本」一起验证。
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           repository: thereYany/atry
           ref: main
@@ -43,7 +43,7 @@ jobs:
       run:
         working-directory: chatry/web
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           path: chatry
       - uses: actions/setup-node@v4
@@ -59,7 +59,7 @@ jobs:
   docs-gate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: 检查路线图与运行手册存在（防止文档被误删）
         run: |
           test -f docs/payment-roadmap-p6-p10.md
