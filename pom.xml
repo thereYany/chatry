@@ -7,7 +7,7 @@
     <parent>
         <groupId>com.wherelee</groupId>
         <artifactId>atry-parent</artifactId>
-        <version>0.11.0</version>
+        <version>0.12.0</version>
         <relativePath/>
     </parent>
 
@@ -22,6 +22,6 @@
 
     <properties>
         <!-- atry 内核版本；内核升级时只改这一处 -->
-        <atry.version>0.11.0</atry.version>
+        <atry.version>0.12.0</atry.version>
     </properties>
 </project>

@@ -89,7 +89,8 @@ app:
     refund-max-attempts: ${PAYMENT_REFUND_MAX_ATTEMPTS:5}
     refund-retry-base-seconds: ${PAYMENT_REFUND_RETRY_BASE_SECONDS:30}
     query:
-      enabled: ${PAYMENT_QUERY_ENABLED:false}
+      # 主动查单是结算兜底：无公网回调域名时靠它结算，同时负责关闭过期支付单。
+      enabled: ${PAYMENT_QUERY_ENABLED:true}
       interval-ms: ${PAYMENT_QUERY_INTERVAL_MS:30000}
       initial-delay-ms: ${PAYMENT_QUERY_INITIAL_DELAY_MS:15000}
       batch-size: ${PAYMENT_QUERY_BATCH_SIZE:20}
