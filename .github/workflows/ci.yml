@@ -31,7 +31,7 @@ jobs:
       - name: Package executable jar
         run: mvn -B -ntp -DskipTests package -f chatry/pom.xml
       - name: Upload jar
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: chatry-app-jar
           path: chatry/chatry-app/target/chatry-app-*-exec.jar
