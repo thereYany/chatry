@@ -4,6 +4,7 @@ import com.wherelee.base.modules.contracts.payment.PaymentOperations;
 import com.wherelee.base.modules.payment.PaymentConfirmationService;
 import com.wherelee.base.modules.payment.outbox.PaymentOutboxDispatcher;
 import com.wherelee.base.modules.platform.common.BizException;
+import com.wherelee.base.modules.payment.mock.MockCashierService;
 import com.wherelee.chatry.credits.ChatBalanceView;
 import com.wherelee.chatry.credits.CreditService;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,13 +53,15 @@ class MallServiceTest {
     private CreditService credits;
     @Mock
     private MockPaymentGuard mockPaymentGuard;
+    @Mock
+    private MockCashierService mockCashier;
 
     private MallService service;
 
     @BeforeEach
     void setUp() {
         service = new MallService(skus, orders, payment, confirmation, outbox, credits,
-                mockPaymentGuard, new MallProperties(15, 30_000L));
+                mockPaymentGuard, mockCashier, new MallProperties(15, 30_000L));
     }
 
     @Test
@@ -154,7 +157,7 @@ class MallServiceTest {
         when(payment.findByBiz(MallService.BIZ_TYPE, "M1")).thenReturn(Optional.of(
                 new PaymentOperations.PaymentView("P-1", MallService.BIZ_TYPE, "M1", "PAYING",
                         999, "CNY", "MOCK", null, null)));
-        when(confirmation.accept(any())).thenReturn(
+        when(mockCashier.simulate("P-1")).thenReturn(
                 new PaymentConfirmationService.ConfirmationResult(false, false, "支付单状态 CLOSED 不允许确认",
                         "P-1", "M1", "CLOSED", 999, "MOCK", null));
 
@@ -177,7 +180,7 @@ class MallServiceTest {
 
         assertThat(response.status()).isEqualTo(MallOrder.STATUS_PAID);
         assertThat(response.balance()).isEqualByComparingTo("17.00");
-        verify(confirmation, never()).accept(any());
+        verify(mockCashier, never()).simulate(any());
         verify(outbox, never()).dispatchOnce();
     }
 

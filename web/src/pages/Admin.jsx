@@ -102,6 +102,7 @@ export default function Admin() {
           <Link className="ghost" to="/admin/audit">审计日志</Link>
           <Link className="ghost" to="/admin/finance">资金账本</Link>
           <Link className="ghost" to="/admin/refund">退款</Link>
+          <Link className="ghost" to="/admin/mock">Mock 渠道</Link>
         </div>
       </div>
 

@@ -41,6 +41,7 @@ export default function AdminFinance() {
           <Link className="ghost" to="/admin/audit">审计日志</Link>
           <span className="ghost active">资金账本</span>
           <Link className="ghost" to="/admin/refund">退款</Link>
+          <Link className="ghost" to="/admin/mock">Mock 渠道</Link>
         </div>
       </div>
 

@@ -11,6 +11,7 @@ import AdminRbac from './pages/AdminRbac.jsx';
 import AdminAudit from './pages/AdminAudit.jsx';
 import AdminFinance from './pages/AdminFinance.jsx';
 import AdminRefund from './pages/AdminRefund.jsx';
+import AdminMock from './pages/AdminMock.jsx';
 
 const AuthContext = createContext(null);
 const CreditsContext = createContext(null);
@@ -139,6 +140,7 @@ export default function App() {
               <Route path="/admin/audit" element={<AdminAudit />} />
               <Route path="/admin/finance" element={<AdminFinance />} />
               <Route path="/admin/refund" element={<AdminRefund />} />
+              <Route path="/admin/mock" element={<AdminMock />} />
               <Route path="/account" element={<Account />} />
             </Route>
             <Route path="*" element={<Navigate to="/chat" replace />} />

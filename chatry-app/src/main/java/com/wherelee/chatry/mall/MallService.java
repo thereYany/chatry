@@ -2,6 +2,7 @@ package com.wherelee.chatry.mall;
 
 import com.wherelee.base.modules.contracts.payment.PaymentOperations;
 import com.wherelee.base.modules.payment.PaymentStatus;
+import com.wherelee.base.modules.payment.mock.MockCashierService;
 import com.wherelee.base.modules.payment.PaymentConfirmationService;
 import com.wherelee.base.modules.payment.PaymentNotification;
 import com.wherelee.base.modules.payment.outbox.PaymentOutboxDispatcher;
@@ -47,12 +48,13 @@ public class MallService {
     private final PaymentOutboxDispatcher outbox;
     private final CreditService credits;
     private final MockPaymentGuard mockPaymentGuard;
+    private final MockCashierService mockCashier;
     private final MallProperties properties;
 
     public MallService(MallSkuRepository skus, MallOrderRepository orders, PaymentOperations payment,
                        PaymentConfirmationService confirmation, PaymentOutboxDispatcher outbox,
                        CreditService credits, MockPaymentGuard mockPaymentGuard,
-                       MallProperties properties) {
+                       MockCashierService mockCashier, MallProperties properties) {
         this.skus = skus;
         this.orders = orders;
         this.payment = payment;
@@ -60,6 +62,7 @@ public class MallService {
         this.outbox = outbox;
         this.credits = credits;
         this.mockPaymentGuard = mockPaymentGuard;
+        this.mockCashier = mockCashier;
         this.properties = properties;
     }
 
@@ -167,10 +170,13 @@ public class MallService {
         if (!PaymentStatus.CREATED.equals(pay.status()) && !PaymentStatus.PAYING.equals(pay.status())) {
             throw new BizException(HttpStatus.CONFLICT, "支付单状态 " + pay.status() + " 不允许支付");
         }
-        // 渠道通知词表是 PAYMENT_SUCCESS（不是发件箱事件码 PAYMENT_SUCCEEDED），与内核确认逻辑对齐
-        var confirmationResult = confirmation.accept(new PaymentNotification(
-                "MOCK", "DEV:" + orderNo + ":PAID", orderNo,
-                "PAYMENT_SUCCESS", pay.amountCents(), pay.providerTradeNo(), null));
+        // 走 Mock 收银台：生成渠道流水 → 签名 → 回调入口验签 → 真实确认链路
+        var confirmationResult = mockCashier.simulate(pay.paymentNo());
+        if (confirmationResult == null) {
+            // 延迟场景：回调稍后投递，当前仍是待支付
+            return new PayResponse(orderNo, orders.findByNo(tenantId, orderNo)
+                    .map(MallOrder::status).orElse("PAYING"), credits.balance(tenantId, userId).balance());
+        }
         if (!confirmationResult.success()) {
             throw new BizException(HttpStatus.CONFLICT, confirmationResult.message());
         }
