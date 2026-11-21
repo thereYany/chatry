@@ -1,6 +1,9 @@
-# chatry
+# chatry（垂直产品）
 
-**对话 AI + 额度商城 + 秒杀**：在 [atry](https://github.com/thereYany/atry) 内核之上构建的完整垂直产品（DeepSeek 网页版/豆包形态）。用户登录后多轮对话、流式输出，按 token 实时扣额度；额度在商城购买；管理员可发布限时秒杀（极低价换大额额度）。
+> 本产品位于单仓工作区的 `chatry/` 目录，内核在 `atry/`。克隆工作区根仓库后，
+> 先 `mvn -DskipTests install -f atry/server/pom.xml` 再构建本模块。
+
+**对话 AI + 额度商城 + 秒杀**：在 `atry/` 内核之上构建的完整垂直产品（DeepSeek 网页版/豆包形态）。用户登录后多轮对话、流式输出，按 token 实时扣额度；额度在商城购买；管理员可发布限时秒杀（极低价换大额额度）。
 
 前端 React + Vite，后端 Spring Boot，前后端同源部署在 8084 一个入口。
 
