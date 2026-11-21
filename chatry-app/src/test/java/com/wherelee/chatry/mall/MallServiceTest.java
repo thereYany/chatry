@@ -110,7 +110,7 @@ class MallServiceTest {
     void mockPayRejectsOtherUsersOrder() {
         MallOrder order = new MallOrder(1, TENANT, "M1", USER + 1, SKU_ID, "秒杀", 190, 3000,
                 MallOrder.STATUS_PAYING, "P-1", true, Instant.now().plus(10, ChronoUnit.MINUTES), null,
-                Instant.now());
+                Instant.now(), 0L, null);
         when(orders.findByNo(TENANT, "M1")).thenReturn(Optional.of(order));
 
         assertThatThrownBy(() -> service.mockPay(TENANT, USER, "M1"))
@@ -133,7 +133,8 @@ class MallServiceTest {
     @Test
     void mockPayClosedOrderIsRejected() {
         MallOrder order = new MallOrder(1, TENANT, "M1", USER, SKU_ID, "额度包", 999, 1200,
-                MallOrder.STATUS_CLOSED, "P-1", false, Instant.now().plusSeconds(600), null, Instant.now());
+                MallOrder.STATUS_CLOSED, "P-1", false, Instant.now().plusSeconds(600), null, Instant.now(),
+                0L, null);
         when(orders.findByNo(TENANT, "M1")).thenReturn(Optional.of(order));
 
         assertThatThrownBy(() -> service.mockPay(TENANT, USER, "M1"))
@@ -145,7 +146,8 @@ class MallServiceTest {
     @Test
     void mockPayDoesNotReportSuccessWhenConfirmationRejected() {
         MallOrder order = new MallOrder(1, TENANT, "M1", USER, SKU_ID, "额度包", 999, 1200,
-                MallOrder.STATUS_PAYING, "P-1", false, Instant.now().plusSeconds(600), null, Instant.now());
+                MallOrder.STATUS_PAYING, "P-1", false, Instant.now().plusSeconds(600), null, Instant.now(),
+                0L, null);
         when(orders.findByNo(TENANT, "M1")).thenReturn(Optional.of(order));
         when(credits.balance(TENANT, USER)).thenReturn(new ChatBalanceView(
                 new java.math.BigDecimal("5.00"), java.math.BigDecimal.ZERO, "CNY"));
@@ -165,7 +167,8 @@ class MallServiceTest {
     @Test
     void mockPayPaidOrderReturnsWithoutConfirmingAgain() {
         MallOrder order = new MallOrder(1, TENANT, "M1", USER, SKU_ID, "额度包", 999, 1200,
-                MallOrder.STATUS_PAID, "P-1", false, Instant.now().plusSeconds(600), Instant.now(), Instant.now());
+                MallOrder.STATUS_PAID, "P-1", false, Instant.now().plusSeconds(600), Instant.now(),
+                Instant.now(), 0L, null);
         when(orders.findByNo(TENANT, "M1")).thenReturn(Optional.of(order));
         when(credits.balance(TENANT, USER)).thenReturn(new ChatBalanceView(
                 new java.math.BigDecimal("17.00"), java.math.BigDecimal.ZERO, "CNY"));

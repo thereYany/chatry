@@ -104,6 +104,59 @@ public class MallOrderRepository {
                 """, Timestamp.from(paidAt), tenantId, orderNo);
     }
 
+    /** 退款进行中：只有 PAID / PARTIALLY_REFUNDED 需要改状态（会扣额度）。 */
+    public int markRefunding(long tenantId, String orderNo, String refundNo) {
+        return jdbc.update("""
+                UPDATE t_mall_order SET status = 'REFUNDING', refund_no = ?
+                WHERE tenant_id = ? AND order_no = ?
+                  AND status IN ('PAID', 'PARTIALLY_REFUNDED')
+                """, refundNo, tenantId, orderNo);
+    }
+
+    /**
+     * 未发额度的退款（PAID_AFTER_CLOSE）只挂退款单号、保留状态：
+     * 状态必须留到退款成功时才能判断「不需要扣额度」。
+     */
+    public int attachRefundNo(long tenantId, String orderNo, String refundNo) {
+        return jdbc.update("""
+                UPDATE t_mall_order SET refund_no = ?
+                WHERE tenant_id = ? AND order_no = ? AND status = 'PAID_AFTER_CLOSE'
+                """, refundNo, tenantId, orderNo);
+    }
+
+    public int addRefunded(long tenantId, String orderNo, long refundedCents, String refundNo) {
+        return jdbc.update("""
+                UPDATE t_mall_order
+                SET refunded_cents = refunded_cents + ?, refund_no = ?,
+                    status = CASE WHEN refunded_cents + ? >= amount_cents THEN 'REFUNDED'
+                                  ELSE 'PARTIALLY_REFUNDED' END
+                WHERE tenant_id = ? AND order_no = ?
+                """, refundedCents, refundNo, refundedCents, tenantId, orderNo);
+    }
+
+    public java.util.List<MallOrder> listRefundable(long tenantId, int limit) {
+        return jdbc.query("""
+                SELECT * FROM t_mall_order
+                WHERE tenant_id = ? AND status IN ('PAID', 'PAID_AFTER_CLOSE', 'REFUNDING', 'PARTIALLY_REFUNDED')
+                ORDER BY id DESC LIMIT ?
+                """, MAPPER, tenantId, limit);
+    }
+
+    public int markRefundFailed(long tenantId, String orderNo, String refundNo) {
+        return jdbc.update("""
+                UPDATE t_mall_order SET status = 'PAID', refund_no = ?
+                WHERE tenant_id = ? AND order_no = ? AND status = 'REFUNDING'
+                """, refundNo, tenantId, orderNo);
+    }
+
+    public List<MallOrder> listByStatus(long tenantId, String status, int limit) {
+        return jdbc.query("""
+                SELECT * FROM t_mall_order
+                WHERE tenant_id = ? AND status = ?
+                ORDER BY id DESC LIMIT ?
+                """, MAPPER, tenantId, status, limit);
+    }
+
     public int closeIfOpen(long tenantId, String orderNo) {
         return jdbc.update("""
                 UPDATE t_mall_order SET status = 'CLOSED'
@@ -142,7 +195,9 @@ public class MallOrderRepository {
                 rs.getBoolean("flash_sale"),
                 toInstant(rs, "expire_at"),
                 toInstant(rs, "paid_at"),
-                toInstant(rs, "created_at"));
+                toInstant(rs, "created_at"),
+                rs.getLong("refunded_cents"),
+                rs.getString("refund_no"));
     }
 
     private static Instant toInstant(ResultSet rs, String column) throws SQLException {

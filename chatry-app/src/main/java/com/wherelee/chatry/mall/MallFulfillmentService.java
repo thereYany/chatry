@@ -78,6 +78,10 @@ public class MallFulfillmentService {
     private void markPaidAfterClose(long tenantId, String orderNo) {
         int marked = orders.markPaidAfterClose(tenantId, orderNo, Instant.now());
         if (marked > 0) {
+            MallOrder latest = orders.findByNo(tenantId, orderNo).orElse(null);
+            if (latest != null) {
+                fundLedger.postPaidAfterClose(tenantId, latest.amountCents(), orderNo);
+            }
             log.warn("mall.order.paid_after_close tenantId={} orderNo={}（不充值，待退款/人工处理）",
                     tenantId, orderNo);
         }

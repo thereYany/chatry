@@ -43,7 +43,8 @@ class MallFulfillmentServiceTest {
     @Test
     void rechargesCreditsWithIdempotentBizNoAndMarksPaid() {
         MallOrder order = new MallOrder(1, 0, "M261121000001ABC", 9, 4, "秒杀", 190, 3000,
-                MallOrder.STATUS_PAYING, "P-1", true, Instant.now().plusSeconds(600), null, Instant.now());
+                MallOrder.STATUS_PAYING, "P-1", true, Instant.now().plusSeconds(600), null, Instant.now(),
+                0L, null);
         when(orders.findByNo(0, "M261121000001ABC")).thenReturn(Optional.of(order));
         when(orders.markPaid(eq(0L), eq("M261121000001ABC"), any(Instant.class))).thenReturn(1);
 
@@ -64,7 +65,8 @@ class MallFulfillmentServiceTest {
     @Test
     void closedOrderIsMarkedPaidAfterCloseWithoutCrediting() {
         MallOrder order = new MallOrder(1, 0, "M-CLOSED", 9, 4, "额度包", 999, 1200,
-                MallOrder.STATUS_CLOSED, "P-1", false, Instant.now().minusSeconds(1), null, Instant.now());
+                MallOrder.STATUS_CLOSED, "P-1", false, Instant.now().minusSeconds(1), null, Instant.now(),
+                0L, null);
         when(orders.findByNo(0, "M-CLOSED")).thenReturn(Optional.of(order));
         when(orders.markPaidAfterClose(eq(0L), eq("M-CLOSED"), any(Instant.class))).thenReturn(1);
 
@@ -78,9 +80,11 @@ class MallFulfillmentServiceTest {
     @Test
     void concurrentCloseWinsBeforeCasMarksAfterClose() {
         MallOrder paying = new MallOrder(1, 0, "M-RACE", 9, 4, "额度包", 999, 1200,
-                MallOrder.STATUS_PAYING, "P-1", false, Instant.now().plusSeconds(600), null, Instant.now());
+                MallOrder.STATUS_PAYING, "P-1", false, Instant.now().plusSeconds(600), null, Instant.now(),
+                0L, null);
         MallOrder closed = new MallOrder(1, 0, "M-RACE", 9, 4, "额度包", 999, 1200,
-                MallOrder.STATUS_CLOSED, "P-1", false, Instant.now().minusSeconds(1), null, Instant.now());
+                MallOrder.STATUS_CLOSED, "P-1", false, Instant.now().minusSeconds(1), null, Instant.now(),
+                0L, null);
         when(orders.findByNo(0, "M-RACE")).thenReturn(Optional.of(paying), Optional.of(closed));
         when(orders.markPaid(eq(0L), eq("M-RACE"), any(Instant.class))).thenReturn(0);
         when(orders.markPaidAfterClose(eq(0L), eq("M-RACE"), any(Instant.class))).thenReturn(1);

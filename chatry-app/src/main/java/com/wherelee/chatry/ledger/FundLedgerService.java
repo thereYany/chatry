@@ -30,6 +30,7 @@ public class FundLedgerService {
     private static final String REVENUE = "REVENUE";
     private static final String PROMO = "PROMO_EXPENSE";
     private static final String OPENING = "OPENING_EQUITY";
+    private static final String REFUND_PAYABLE = "REFUND_PAYABLE";
     private static final String DEBIT = "DEBIT";
     private static final String CREDIT = "CREDIT";
     private static final String CNY = "CNY";
@@ -87,6 +88,65 @@ public class FundLedgerService {
                 "对话额度消耗", List.of(
                         new Posting(LIABILITY, userId, "LIABILITY", CREDIT, DEBIT, amount),
                         new Posting(REVENUE, 0L, "REVENUE", CREDIT, CREDIT, amount)));
+    }
+
+    /**
+     * 退款冲销：退回实付、扣回额度、冲回赠送成本。
+     *
+     * <p>借 额度负债（扣回额度）＝ 贷 清算（退回实付）+ 贷 营销费用（冲回赠送）。
+     * 扣回额度 ≥ 实付时成立（充值额度不低于实付金额是当前商品规则）。</p>
+     */
+    @Transactional
+    public boolean postRefund(long tenantId, long userId, long refundAmountCents,
+                              long orderCreditCents, long deductCreditCents, String refundNo) {
+        BigDecimal cash = BigDecimal.valueOf(refundAmountCents, 2);
+        BigDecimal deduct = BigDecimal.valueOf(deductCreditCents, 2);
+        if (cash.signum() <= 0) {
+            return false;
+        }
+        if (deduct.compareTo(cash) < 0) {
+            // 扣回额度小于实付：差额冲减收入（部分退款且额度已被消费到低于实付）
+            BigDecimal revenue = cash.subtract(deduct);
+            return post(tenantId, "refund:" + refundNo, "REFUND", refundNo,
+                    "退款 " + refundNo, List.of(
+                            new Posting(LIABILITY, userId, "LIABILITY", CREDIT, DEBIT, deduct),
+                            new Posting(REVENUE, 0L, "REVENUE", CREDIT, DEBIT, revenue),
+                            new Posting(CLEARING, 0L, "ASSET", DEBIT, CREDIT, cash)));
+        }
+        BigDecimal promoReversal = deduct.subtract(cash);
+        List<Posting> postings = new ArrayList<>();
+        postings.add(new Posting(LIABILITY, userId, "LIABILITY", CREDIT, DEBIT, deduct));
+        postings.add(new Posting(CLEARING, 0L, "ASSET", DEBIT, CREDIT, cash));
+        if (promoReversal.signum() > 0) {
+            postings.add(new Posting(PROMO, 0L, "EXPENSE", DEBIT, CREDIT, promoReversal));
+        }
+        return post(tenantId, "refund:" + refundNo, "REFUND", refundNo, "退款 " + refundNo, postings);
+    }
+
+    /** 关单后收到支付：钱已收到但额度不发，记「待退款负债」，等退款时冲掉。 */
+    @Transactional
+    public boolean postPaidAfterClose(long tenantId, long amountCents, String orderNo) {
+        BigDecimal cash = BigDecimal.valueOf(amountCents, 2);
+        if (cash.signum() <= 0) {
+            return false;
+        }
+        return post(tenantId, "paid-after-close:" + orderNo, "PAID_AFTER_CLOSE", orderNo,
+                "关单后收到支付 " + orderNo, List.of(
+                        new Posting(CLEARING, 0L, "ASSET", DEBIT, DEBIT, cash),
+                        new Posting(REFUND_PAYABLE, 0L, "LIABILITY", CREDIT, CREDIT, cash)));
+    }
+
+    /** 关单后退款：冲掉待退款负债、退还实付。 */
+    @Transactional
+    public boolean postRefundNoCredit(long tenantId, long refundAmountCents, String refundNo) {
+        BigDecimal cash = BigDecimal.valueOf(refundAmountCents, 2);
+        if (cash.signum() <= 0) {
+            return false;
+        }
+        return post(tenantId, "refund:" + refundNo, "REFUND_NO_CREDIT", refundNo,
+                "关单后退款 " + refundNo, List.of(
+                        new Posting(REFUND_PAYABLE, 0L, "LIABILITY", CREDIT, DEBIT, cash),
+                        new Posting(CLEARING, 0L, "ASSET", DEBIT, CREDIT, cash)));
     }
 
     /** 按 metering 的结算流水即时补记；没有结算流水说明本次未落账，交给 sweep 任务。 */
