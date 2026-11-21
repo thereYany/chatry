@@ -1,0 +1,225 @@
+server:
+  port: ${SERVER_PORT:8084}
+  shutdown: graceful
+
+spring:
+  application:
+    name: chatry
+  datasource:
+    url: ${DB_URL:jdbc:mysql://127.0.0.1:3306/chatry_dev?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true}
+    username: ${DB_USER:chat}
+    password: ${DB_PASSWORD:chatpass}
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:10}
+      minimum-idle: ${DB_POOL_MIN_IDLE:2}
+      connection-timeout: 3000
+      validation-timeout: 1000
+  data:
+    redis:
+      host: ${REDIS_HOST:127.0.0.1}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: ${REDIS_DATABASE:0}
+      timeout: 2s
+  flyway:
+    enabled: true
+    # 内核模块版本段（V1xx-V5xx）与垂直段（V9xx）并存：允许后加的内核迁移补跑，
+    # 避免「垂直段已执行、内核新增迁移被判 out-of-order」而拒绝启动。
+    out-of-order: true
+    # 内核表由 atry 各模块 jar 自带迁移；垂直表在 chatry 目录（V9xx 段）
+    locations: classpath:db/migration/platform,classpath:db/migration/identity,classpath:db/migration/payment,classpath:db/migration/llm,classpath:db/migration/metering,classpath:db/migration/chatry
+  task:
+    scheduling:
+      pool:
+        size: ${SCHEDULING_POOL_SIZE:4}
+      thread-name-prefix: scheduling-
+
+mybatis:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+
+app:
+  tenant:
+    # 未带 tenant_id 条件的单表 SQL 直接拒绝；垂直表在此登记
+    enforce: ${TENANT_ENFORCE:true}
+    default-tenant-id: 0
+    extra-tables:
+      - t_chat_conversation
+      - t_chat_message
+  security:
+    cors-allowed-origins: ${CORS_ALLOWED_ORIGINS:https://118.31.111.223,http://118.31.111.223,http://127.0.0.1:5173,http://localhost:5173,http://127.0.0.1:5175,http://localhost:5175,http://127.0.0.1:8084,http://localhost:8084}
+    trust-forwarded-headers: ${TRUST_FORWARDED_HEADERS:false}
+    login-protection-enabled: ${LOGIN_PROTECTION_ENABLED:true}
+    login-max-attempts: ${LOGIN_MAX_ATTEMPTS:8}
+    login-ip-max-attempts: ${LOGIN_IP_MAX_ATTEMPTS:40}
+    login-window-minutes: ${LOGIN_WINDOW_MINUTES:10}
+  jwt:
+    secret: ${JWT_SECRET:chatry-demo-jwt-secret-change-before-production-2026}
+    ttl-minutes: ${JWT_TTL_MINUTES:10080}
+    issuer: ${JWT_ISSUER:atry}
+    audience: ${JWT_AUDIENCE:chatry-web}
+  rate-limit:
+    auth:
+      register:
+        # 覆盖 @RateLimit 注解默认值（每 IP 每小时 10 次）
+        limit: ${REGISTER_RATE_LIMIT:10}
+        window-seconds: ${REGISTER_RATE_WINDOW_SECONDS:3600}
+  audit:
+    enabled: ${AUDIT_CLEANUP_ENABLED:true}
+    retention-days: ${AUDIT_RETENTION_DAYS:180}
+    batch-size: ${AUDIT_CLEANUP_BATCH_SIZE:1000}
+    max-batches: ${AUDIT_CLEANUP_MAX_BATCHES:10}
+    cron: ${AUDIT_CLEANUP_CRON:0 20 3 * * *}
+  logging:
+    access-log-enabled: ${LOG_ACCESS_ENABLED:true}
+    access-log-slow-ms: ${ACCESS_LOG_SLOW_MS:1000}
+    slow-sql-enabled: ${SLOW_SQL_ENABLED:false}
+    slow-sql-threshold-ms: ${SLOW_SQL_THRESHOLD_MS:200}
+  payment:
+    provider: ${PAYMENT_PROVIDER:mock}
+    app-id: ${PAYMENT_APP_ID:chatry}
+    mock-enabled: ${PAYMENT_MOCK_ENABLED:true}
+    mock-secret: ${PAYMENT_MOCK_SECRET:chatry-mock-payment-secret-change-before-production}
+    order-expire-minutes: ${PAYMENT_ORDER_EXPIRE_MINUTES:15}
+    query-after-seconds: ${PAYMENT_QUERY_AFTER_SECONDS:15}
+    reconcile-batch-size: ${PAYMENT_RECONCILE_BATCH_SIZE:20}
+    reconcile-interval-ms: ${PAYMENT_RECONCILE_INTERVAL_MS:3600000}
+    reconcile-initial-delay-ms: ${PAYMENT_RECONCILE_INITIAL_DELAY_MS:3600000}
+    refund-max-attempts: ${PAYMENT_REFUND_MAX_ATTEMPTS:5}
+    refund-retry-base-seconds: ${PAYMENT_REFUND_RETRY_BASE_SECONDS:30}
+    query:
+      # 主动查单是结算兜底：无公网回调域名时靠它结算，同时负责关闭过期支付单。
+      enabled: ${PAYMENT_QUERY_ENABLED:true}
+      interval-ms: ${PAYMENT_QUERY_INTERVAL_MS:30000}
+      initial-delay-ms: ${PAYMENT_QUERY_INITIAL_DELAY_MS:15000}
+      batch-size: ${PAYMENT_QUERY_BATCH_SIZE:20}
+    outbox:
+      interval-ms: ${PAYMENT_OUTBOX_INTERVAL_MS:5000}
+      initial-delay-ms: ${PAYMENT_OUTBOX_INITIAL_DELAY_MS:10000}
+      reclaim-after-seconds: ${PAYMENT_OUTBOX_RECLAIM_AFTER_SECONDS:120}
+  storage:
+    enabled: false
+  invitation:
+    base-url: ${APP_BASE_URL:http://127.0.0.1:5173}
+    expiry-hours: ${INVITE_EXPIRY_HOURS:72}
+    max-attempts: ${INVITE_MAX_ATTEMPTS:20}
+    window-minutes: ${INVITE_WINDOW_MINUTES:10}
+
+management:
+  server:
+    port: ${MANAGEMENT_PORT:9092}
+    address: ${MANAGEMENT_ADDRESS:127.0.0.1}
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  metrics:
+    tags:
+      application: chatry
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+        atry.method: true
+      percentiles:
+        http.server.requests: 0.5,0.95,0.99
+
+atry:
+  llm:
+    mock:
+      delay-ms: ${ATRY_LLM_MOCK_DELAY_MS:0}
+      failure-model: ${ATRY_LLM_MOCK_FAILURE_MODEL:mock-fail}
+      flaky-model: ${ATRY_LLM_MOCK_FLAKY_MODEL:mock-flaky}
+      slow-model: ${ATRY_LLM_MOCK_SLOW_MODEL:mock-slow}
+      slow-delay-ms: ${ATRY_LLM_MOCK_SLOW_DELAY_MS:5000}
+      default-max-tokens: ${ATRY_LLM_MOCK_DEFAULT_MAX_TOKENS:128}
+      chunk-count: ${ATRY_LLM_MOCK_CHUNK_COUNT:8}
+      chunk-delay-ms: ${ATRY_LLM_MOCK_CHUNK_DELAY_MS:30}
+      mid-stream-fail-model: ${ATRY_LLM_MOCK_MID_STREAM_FAIL_MODEL:mock-stream-mid-fail}
+    timeouts:
+      connect-ms: ${ATRY_LLM_CONNECT_TIMEOUT_MS:5000}
+      first-token-ms: ${ATRY_LLM_FIRST_TOKEN_TIMEOUT_MS:45000}
+      chunk-idle-ms: ${ATRY_LLM_CHUNK_IDLE_TIMEOUT_MS:60000}
+      total-ms: ${ATRY_LLM_TOTAL_TIMEOUT_MS:600000}
+    retry:
+      max-attempts: ${ATRY_LLM_MAX_ATTEMPTS:3}
+      initial-backoff-ms: ${ATRY_LLM_INITIAL_BACKOFF_MS:300}
+      max-backoff-ms: ${ATRY_LLM_MAX_BACKOFF_MS:2000}
+      jitter-ratio: ${ATRY_LLM_BACKOFF_JITTER:0.2}
+    circuit:
+      failure-rate-threshold: ${ATRY_LLM_CIRCUIT_FAILURE_RATE:50}
+      minimum-calls: ${ATRY_LLM_CIRCUIT_MIN_CALLS:20}
+      open-ms: ${ATRY_LLM_CIRCUIT_OPEN_MS:30000}
+      half-open-probes: ${ATRY_LLM_CIRCUIT_HALF_OPEN_PROBES:5}
+      slow-call-ms: ${ATRY_LLM_CIRCUIT_SLOW_CALL_MS:0}
+      slow-call-rate-threshold: ${ATRY_LLM_CIRCUIT_SLOW_CALL_RATE:60}
+    rate-limit:
+      # auto=有 Redis 时多实例共享令牌桶；local=仅本机；redis=强制共享（故障仍降级本地）
+      backend: ${ATRY_LLM_RATE_LIMIT_BACKEND:auto}
+      tenant-rpm: ${ATRY_LLM_TENANT_RPM:600}
+      provider-rpm: ${ATRY_LLM_PROVIDER_RPM:6000}
+      max-in-flight: ${ATRY_LLM_MAX_IN_FLIGHT:100}
+    outbox:
+      enabled: ${ATRY_LLM_OUTBOX_ENABLED:true}
+      poll-ms: ${ATRY_LLM_OUTBOX_POLL_MS:1000}
+    deepseek:
+      enabled: ${DEEPSEEK_ENABLED:false}
+      base-url: ${DEEPSEEK_BASE_URL:https://api.deepseek.com}
+      api-key: ${DEEPSEEK_API_KEY:}
+      default-model: ${DEEPSEEK_DEFAULT_MODEL:deepseek-flash}
+      thinking-disabled: ${DEEPSEEK_THINKING_DISABLED:true}
+      connect-timeout-ms: ${DEEPSEEK_CONNECT_TIMEOUT_MS:5000}
+      total-timeout-ms: ${DEEPSEEK_TOTAL_TIMEOUT_MS:600000}
+  metering:
+    expiry:
+      enabled: ${ATRY_METERING_EXPIRY_ENABLED:true}
+      poll-ms: ${ATRY_METERING_EXPIRY_POLL_MS:60000}
+
+# 日志格式/脱敏/滚动由 logback-spring.xml 接管
+logging:
+  level:
+    com.wherelee.base: info
+    com.wherelee.chatry: info
+
+springdoc:
+  pre-loading-enabled: true
+  api-docs:
+    path: /v3/api-docs
+    enabled: ${SPRINGDOC_ENABLED:true}
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: ${SPRINGDOC_ENABLED:true}
+    operations-sorter: alpha
+  packages-to-scan: com.wherelee.chatry
+
+chatry:
+  mall:
+    # 未支付订单关单并回补库存的时限
+    order-expire-minutes: ${CHATRY_MALL_ORDER_EXPIRE_MINUTES:15}
+  credits:
+    # 新用户首次对话自动赠送的额度（CNY）；买了额度包后由商城走幂等充值加钱
+    initial-grant: ${CHATRY_INITIAL_GRANT:5.000000}
+    currency: ${CHATRY_CURRENCY:CNY}
+    # 额度页「约可对话次数」的估算口径（一次对话的输入/输出 token）
+    estimate-input-tokens: ${CHATRY_ESTIMATE_INPUT_TOKENS:400}
+    estimate-output-tokens: ${CHATRY_ESTIMATE_OUTPUT_TOKENS:600}
+  chat:
+    # 默认 mock-small：本地不配任何 key 也能跑通全链路；接真实模型改这里 + DEEPSEEK_ENABLED
+    default-model: ${CHATRY_CHAT_MODEL:mock-small}
+    default-max-tokens: ${CHATRY_CHAT_MAX_TOKENS:512}
+    context-messages: ${CHATRY_CONTEXT_MESSAGES:20}
+    context-chars: ${CHATRY_CONTEXT_CHARS:12000}
+    deadline-seconds: ${CHATRY_CHAT_DEADLINE_SECONDS:60}
+    stream-deadline-seconds: ${CHATRY_CHAT_STREAM_DEADLINE_SECONDS:300}
+    stream-timeout-ms: ${CHATRY_CHAT_STREAM_TIMEOUT_MS:300000}
+    title-chars: ${CHATRY_TITLE_CHARS:20}
+  seed:
+    admin-password: ${SEED_ADMIN_PASSWORD:admin12345}
+    demo-user-enabled: ${CHATRY_DEMO_USER_ENABLED:true}
+    demo-username: ${CHATRY_DEMO_USERNAME:demo}
+    demo-password: ${CHATRY_DEMO_PASSWORD:demo123456}
