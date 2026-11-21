@@ -1,0 +1,17 @@
+# 构建产物
+target/
+dist/
+node_modules/
+logs/
+*.log
+
+# IDE / 系统
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# 本地密钥与运行数据
+*.env
+*.pem
+.env.docker
