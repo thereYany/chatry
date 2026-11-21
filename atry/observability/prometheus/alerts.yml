@@ -1,0 +1,122 @@
+groups:
+  - name: atry-slo
+    rules:
+      - alert: AtryBackendDown
+        expr: up{job="atry-backend"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "atry backend 不可达"
+          description: "Prometheus 连续 2 分钟抓不到 atry-backend 的指标。"
+
+      - alert: AtryHigh5xxRate
+        expr: |
+          sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m]))
+          / clamp_min(sum(rate(http_server_requests_seconds_count[5m])), 0.001)
+          > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "atry 5xx 比例超过 5%"
+          description: "近 5 分钟 5xx 占比 {{ $value | humanizePercentage }}。"
+
+      - alert: AtryP95LatencyHigh
+        expr: histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket[5m])) by (le)) > 1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "atry HTTP p95 超过 1s"
+          description: "近 10 分钟 p95 = {{ $value }}s。"
+
+      - alert: AtryHeapPressure
+        expr: sum(jvm_memory_used_bytes{area="heap"}) / sum(jvm_memory_max_bytes{area="heap"}) > 0.9
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "atry 堆内存使用率超过 90%"
+          description: "当前堆使用率 {{ $value | humanizePercentage }}，检查泄漏或调大 mem_limit。"
+
+      - alert: AtryLockFailures
+        expr: increase(atry_lock_failed_total[10m]) > 5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "分布式锁失败增多"
+          description: "10 分钟内锁获取失败 {{ $value }} 次，检查热点 key 或持锁过久。"
+
+      - alert: AtryRateLimitSpike
+        expr: sum(rate(atry_rate_limit_blocked_total[5m])) > 1
+        for: 5m
+        labels:
+          severity: info
+        annotations:
+          summary: "限流命中持续升高"
+          description: "近 5 分钟每秒限流命中 >1，检查攻击或阈值配置。"
+
+      - alert: ChatryLedgerUnbalanced
+        expr: chatry_ledger_unbalanced > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "资金账本出现借贷不平交易"
+          description: "有 {{ $value }} 笔交易借贷不等，立即停止写账并排查最近事件键。"
+
+      - alert: ChatryLedgerReconciliationDiff
+        expr: chatry_ledger_liability_diff > 0.0001 or chatry_ledger_cash_diff > 0.0001
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "账实差异不为 0"
+          description: "负债−计量差异或清算−已付差异持续 10 分钟非 0，按运行手册对账章节处理。"
+
+      - alert: ChatryStuckPayments
+        expr: chatry_payment_stuck > 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "支付单停留 PAYING 超时"
+          description: "{{ $value }} 笔支付单超过 10 分钟未结算，检查回调与主动查单。"
+
+      - alert: ChatryRefundBacklog
+        expr: chatry_refund_pending > 5
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "退款积压"
+          description: "{{ $value }} 笔退款处理中/待重试，检查渠道异常与重试任务。"
+
+      - alert: ChatryRefundExhausted
+        expr: chatry_refund_exhausted > 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "退款重试耗尽"
+          description: "有 {{ $value }} 笔退款重试耗尽，需要人工退款或人工补偿。"
+
+      - alert: ChatryPaidAfterClosePending
+        expr: chatry_paid_after_close > 0
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "关单后支付待处理"
+          description: "{{ $value }} 笔订单钱已到、额度未发；自动退款任务应在 1 分钟内处理，持续存在说明失败。"
+
+      - alert: ChatryOutboxBacklog
+        expr: chatry_outbox_pending > 20
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "支付发件箱积压"
+          description: "待投递事件 {{ $value }} 条，检查投递任务与监听器异常。"

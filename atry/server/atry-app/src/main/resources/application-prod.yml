@@ -1,0 +1,111 @@
+server:
+  port: ${SERVER_PORT:8084}
+  forward-headers-strategy: framework
+
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD}
+
+# 生产默认关闭接口文档与慢 SQL 探针
+springdoc:
+  api-docs:
+    enabled: ${SPRINGDOC_ENABLED:false}
+  swagger-ui:
+    enabled: ${SPRINGDOC_ENABLED:false}
+
+app:
+  logging:
+    access-log-enabled: ${LOG_ACCESS_ENABLED:true}
+    access-log-slow-ms: ${ACCESS_LOG_SLOW_MS:1000}
+    slow-sql-enabled: ${SLOW_SQL_ENABLED:false}
+    slow-sql-threshold-ms: ${SLOW_SQL_THRESHOLD_MS:200}
+  tenant:
+    enforce: true
+  security:
+    cors-allowed-origins: ${CORS_ALLOWED_ORIGINS}
+    trust-forwarded-headers: ${TRUST_FORWARDED_HEADERS:false}
+    login-protection-enabled: true
+    login-max-attempts: ${LOGIN_MAX_ATTEMPTS:8}
+    login-ip-max-attempts: ${LOGIN_IP_MAX_ATTEMPTS:40}
+    login-window-minutes: ${LOGIN_WINDOW_MINUTES:10}
+  jwt:
+    secret: ${JWT_SECRET}
+    ttl-minutes: ${JWT_TTL_MINUTES:480}
+  storage:
+    enabled: ${STORAGE_ENABLED:false}
+    bucket: ${COS_BUCKET:}
+    region: ${COS_REGION:}
+    url-ttl-minutes: ${STORAGE_URL_TTL_MINUTES:240}
+    connect-timeout-ms: ${STORAGE_CONNECT_TIMEOUT_MS:3000}
+    read-timeout-ms: ${STORAGE_READ_TIMEOUT_MS:15000}
+    max-retries: ${STORAGE_MAX_RETRIES:2}
+    url-cache-margin-minutes: ${STORAGE_URL_CACHE_MARGIN_MINUTES:30}
+  invitation:
+    base-url: ${APP_BASE_URL}
+    expiry-hours: ${INVITE_EXPIRY_HOURS:72}
+    max-attempts: ${INVITE_MAX_ATTEMPTS:20}
+    window-minutes: ${INVITE_WINDOW_MINUTES:10}
+  alert:
+    webhook-url: ${ALERT_WEBHOOK_URL:}
+  seed:
+    admin-password: ${SEED_ADMIN_PASSWORD:}
+  payment:
+    provider: ${PAYMENT_PROVIDER:mock}
+    app-id: ${PAYMENT_APP_ID:atry}
+    query:
+      enabled: ${PAYMENT_QUERY_ENABLED:true}
+      interval-ms: ${PAYMENT_QUERY_INTERVAL_MS:30000}
+      initial-delay-ms: ${PAYMENT_QUERY_INITIAL_DELAY_MS:15000}
+      batch-size: ${PAYMENT_QUERY_BATCH_SIZE:20}
+    outbox:
+      reclaim-after-seconds: ${PAYMENT_OUTBOX_RECLAIM_AFTER_SECONDS:120}
+    mock-enabled: ${PAYMENT_MOCK_ENABLED:false}
+    mock-secret: ${PAYMENT_MOCK_SECRET:}
+    order-expire-minutes: ${PAYMENT_ORDER_EXPIRE_MINUTES:15}
+    query-after-seconds: ${PAYMENT_QUERY_AFTER_SECONDS:60}
+    reconcile-batch-size: ${PAYMENT_RECONCILE_BATCH_SIZE:50}
+    reconcile-interval-ms: ${PAYMENT_RECONCILE_INTERVAL_MS:60000}
+    reconcile-initial-delay-ms: ${PAYMENT_RECONCILE_INITIAL_DELAY_MS:30000}
+    refund-max-attempts: ${PAYMENT_REFUND_MAX_ATTEMPTS:5}
+    refund-retry-base-seconds: ${PAYMENT_REFUND_RETRY_BASE_SECONDS:30}
+    alipay:
+      app-id: ${ALIPAY_APP_ID:}
+      private-key: ${ALIPAY_PRIVATE_KEY:}
+      alipay-public-key: ${ALIPAY_PUBLIC_KEY:}
+      seller-id: ${ALIPAY_SELLER_ID:}
+      gateway-url: ${ALIPAY_GATEWAY_URL:https://openapi.alipay.com/gateway.do}
+      notify-url: ${ALIPAY_NOTIFY_URL:}
+      return-url: ${ALIPAY_RETURN_URL:}
+      charset: ${ALIPAY_CHARSET:UTF-8}
+      sign-type: ${ALIPAY_SIGN_TYPE:RSA2}
+      bill:
+        enabled: ${ALIPAY_BILL_ENABLED:false}
+        bill-type: ${ALIPAY_BILL_TYPE:trade}
+        smid: ${ALIPAY_BILL_SMID:}
+        charset: ${ALIPAY_BILL_CHARSET:GBK}
+        connect-timeout-ms: ${ALIPAY_BILL_CONNECT_TIMEOUT_MS:5000}
+        read-timeout-ms: ${ALIPAY_BILL_READ_TIMEOUT_MS:30000}
+      format: ${ALIPAY_FORMAT:json}
+      connect-timeout-ms: ${ALIPAY_CONNECT_TIMEOUT_MS:5000}
+      read-timeout-ms: ${ALIPAY_READ_TIMEOUT_MS:15000}
+
+management:
+  server:
+    address: 127.0.0.1
+  endpoint:
+    health:
+      show-details: never
+
+logging:
+  file:
+    name: ${LOG_FILE:logs/atry-prod.log}
+  level:
+    root: info
+    com.wherelee.base: info

@@ -1,0 +1,48 @@
+# Java / Maven
+target/
+*.class
+
+# Node / 前端
+node_modules/
+dist/
+npm-debug.log*
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# 本地环境与日志
+.env
+.env.*
+!.env.*.example
+*.local
+*.log
+
+# 本地上传目录（STORAGE_TYPE=local 时的用户文件，不进仓库）
+server/data/
+
+# 测试脚本生成的临时文件
+tools/*.png
+tools/*.bin
+tools/not-image.txt
+tools/chunked-body.json
+
+# Python 字节码（CI 脚本本地跑一次就会生成）
+__pycache__/
+*.pyc
+
+# browser verification screenshots
+verify-*.png
+
+# 本地运行日志与截图
+logs/
+
+# 数据库备份产物
+backups/
+
+# 压测/JVM 原始产物（大文件不进仓库）
+reports/
+tools/k6/load-summary.json
+*.jfr
+*.hprof

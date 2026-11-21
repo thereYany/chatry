@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.wherelee</groupId>
+        <artifactId>atry-parent</artifactId>
+        <version>0.12.0</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+    <artifactId>atry-llm</artifactId>
+    <name>atry-llm（LLM 调用治理）</name>
+    <description>LLM provider 抽象、路由/容错、流式、观测；业务无关的通用调用框架</description>
+    <dependencies>
+        <dependency>
+            <groupId>com.wherelee</groupId>
+            <artifactId>atry-platform</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.wherelee</groupId>
+            <artifactId>atry-contracts</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+</project>

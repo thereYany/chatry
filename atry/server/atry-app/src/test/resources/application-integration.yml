@@ -1,0 +1,122 @@
+# 集成测试配置：真实 MySQL(atry_it) + Redis(db 15)，与 CI 契约一致。
+# 说明：本地执行前 export IT_DB_USER=btry IT_DB_PASSWORD=btrypass（其余变量同 CI）；CI 用 atry/atrypass。
+spring:
+  datasource:
+    url: ${IT_DB_URL:jdbc:mysql://127.0.0.1:3306/atry_it?allowPublicKeyRetrieval=true&useSSL=false&allowMultiQueries=true}
+    username: ${IT_DB_USER:atry}
+    password: ${IT_DB_PASSWORD:atrypass}
+    hikari:
+      maximum-pool-size: 24
+      minimum-idle: 4
+      connection-timeout: 10000
+  data:
+    redis:
+      host: ${IT_REDIS_HOST:127.0.0.1}
+      port: ${IT_REDIS_PORT:6379}
+      password: ${IT_REDIS_PASSWORD:}
+      database: ${IT_REDIS_DATABASE:15}
+      timeout: 2s
+  flyway:
+    enabled: true
+    out-of-order: true
+
+server:
+  port: 0
+
+management:
+  server:
+    port: 0
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+app:
+  tenant:
+    enforce: true
+    default-tenant-id: 0
+  security:
+    # 登录节流在专门的并发用例里用真实服务实例测；默认关闭避免影响其它用例
+    login-protection-enabled: false
+    trust-forwarded-headers: false
+  storage:
+    enabled: false
+  invitation:
+    base-url: http://127.0.0.1:5175
+    expiry-hours: 72
+    max-attempts: 100
+    window-minutes: 10
+  payment:
+    provider: mock
+    app-id: atry-it
+    mock-enabled: true
+    mock-secret: integration-mock-secret
+    order-expire-minutes: 15
+    query:
+      enabled: false
+    outbox:
+      interval-ms: 3600000
+      initial-delay-ms: 3600000
+      reclaim-after-seconds: 120
+    reconcile-batch-size: 100
+    reconcile-interval-ms: 3600000
+    reconcile-initial-delay-ms: 3600000
+    refund-max-attempts: 3
+    refund-retry-base-seconds: 5
+  recon:
+    enabled: false
+  alert:
+    enabled: false
+    initial-delay-ms: 3600000
+    dedup-minutes: 30
+  seed:
+    admin-password: Integration1Pass
+
+atry:
+  demo:
+    enabled: true
+    currency: CNY
+    initial-balance: 10.000000
+    default-model: mock-small
+    default-max-tokens: 64
+  llm:
+    outbox:
+      # 保持 bean 存在（测试内手动 dispatch），轮询间隔设为 1h 避免后台并发干扰
+      enabled: true
+      poll-ms: 3600000
+    metering:
+      expiry:
+        enabled: false
+    rate-limit:
+      # 集成测试用本地桶，避免与其他用例共享 Redis 桶互相干扰；共享限流另有专测
+      backend: local
+      tenant-rpm: 60000
+      provider-rpm: 60000
+      max-in-flight: 1000
+    retry:
+      max-attempts: 2
+      initial-backoff-ms: 10
+      max-backoff-ms: 20
+      jitter-ratio: 0
+    timeouts:
+      connect-ms: 2000
+      first-token-ms: 3000
+      chunk-idle-ms: 3000
+      total-ms: 15000
+    circuit:
+      failure-rate-threshold: 50
+      minimum-calls: 20
+      open-ms: 30000
+      half-open-probes: 5
+    mock:
+      delay-ms: 0
+      chunk-count: 4
+      chunk-delay-ms: 0
+      slow-delay-ms: 200
+      default-max-tokens: 64
+
+logging:
+  level:
+    root: warn
+    com.wherelee.base: warn
+    com.wherelee.template: warn

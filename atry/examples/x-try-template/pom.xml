@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- 依赖本机安装的 atry 内核（先执行 atry 仓库的 mvn install） -->
+    <parent>
+        <groupId>com.wherelee</groupId>
+        <artifactId>atry-parent</artifactId>
+        <version>0.12.0</version>
+        <relativePath/>
+    </parent>
+
+    <artifactId>atry-template</artifactId>
+    <name>atry-template</name>
+    <description>基于 atry 内核的最小新项目骨架：登录 + 上传 + 支付回调履约</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.wherelee</groupId>
+            <artifactId>atry-platform</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.wherelee</groupId>
+            <artifactId>atry-contracts</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.wherelee</groupId>
+            <artifactId>atry-app</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

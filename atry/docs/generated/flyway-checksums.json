@@ -1,0 +1,19 @@
+{
+  "migrations": {
+    "V100__identity_schema": "f6290e66a98bc55fcf6d83b64dc4422a426efe18393112531212afd5f01b60cf",
+    "V101__identity_auth_registration": "937439b0e18b42862a6cb66a7c63f03450b632ae5a1878f805c9a0008581bb1c",
+    "V102__identity_session": "97c048a68c6eb018c309328a30b7e738acdd03a2721ef5324c11bcc23b58ad53",
+    "V103__identity_auth_event_created_index": "b03481ac30d845a491ddb16f7b7110f0e9a8e8380ec221d656b61461b8c32811",
+    "V104__identity_audit_permission": "91f71b61a11521a1afa65e59ce641746050ac592ca9546a955834a97fe3e1b2d",
+    "V200__payment_schema": "e8024d1ff1511ca955f3dac678b989a10ceeef5e468ce54820282b75f688bec9",
+    "V201__refund_partial": "467d616310228096ac93320fcbcc477b2072494a1fc91a344be084381cae8ba5",
+    "V202__payment_mock_scenario": "d825583e9a9fb6771aa2c98b14aa5dc081b2e6be69f1c9cb37dc93e656e0a3e4",
+    "V300__platform_schema": "c1d03e39d8e52874b774288fd2f7b7e083d8f24748bfa215d93f79e9dc65b3da",
+    "V301__platform_audit_created_index": "3310ad72ce5e95ed2958869815932b9a706499cad2f4db4b77bb21f76c3186f1",
+    "V400__llm_schema": "8628a1121bb7964b8f100e981360e026d4ce8fc961965382baca4492d44f840c",
+    "V500__metering_schema": "f69e3f10d2abc55c2664c69b558aae5b4d93b0fd8f809b9221b86d9edcc16b58",
+    "V501__metering_seed": "092a584bd1adec320e6d4e19bfa7f8070eea267a28fa4230c6a7600928b7775a",
+    "V502__metering_invoice_recon": "3645795af4c31566f59cf8977c6f2665ecba9342bb443162d7485943e3e586bd",
+    "V503__deepseek_pricing": "8c0045a7aa578e66e93036150e9df571b027643b170e06c5df4e548356c8e661"
+  }
+}

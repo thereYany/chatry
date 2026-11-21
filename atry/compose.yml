@@ -1,0 +1,125 @@
+name: atry
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "20m"
+    max-file: "3"
+
+services:
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-atry_core}
+      MYSQL_USER: ${DB_USER:-atry}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env.docker}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD in .env.docker}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+      - --innodb-buffer-pool-size=${MYSQL_BUFFER_POOL_SIZE:-128M}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    ports:
+      - "${MYSQL_BIND:-127.0.0.1}:${MYSQL_HOST_PORT:-13306}:3306"
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=$$MYSQL_ROOT_PASSWORD mysqladmin ping -h 127.0.0.1 -uroot --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    # 768m: 实测 512m 时 InnoDB buffer pool+连接等已用 76–81%，满负载余量不足
+    mem_limit: ${MYSQL_MEM_LIMIT:-768m}
+    logging: *default-logging
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?set REDIS_PASSWORD in .env.docker}
+    command:
+      - redis-server
+      - --requirepass
+      - ${REDIS_PASSWORD:?set REDIS_PASSWORD in .env.docker}
+      - --maxmemory
+      - ${REDIS_MAXMEMORY:-128mb}
+    volumes:
+      - redis-data:/data
+    ports:
+      - "${REDIS_BIND:-127.0.0.1}:${REDIS_HOST_PORT:-16379}:6379"
+    healthcheck:
+      test: ["CMD-SHELL", "REDISCLI_AUTH=$$REDIS_PASSWORD redis-cli ping | grep -q PONG"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    # 192m: maxmemory 128mb + 碎片/RDB 缓冲；160m 在满负载时临界
+    mem_limit: ${REDIS_MEM_LIMIT:-192m}
+    logging: *default-logging
+
+  backend:
+    build: ./server
+    restart: unless-stopped
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-atry_core}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+      DB_USER: ${DB_USER:-atry}
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env.docker}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://127.0.0.1:8080,http://localhost:8080}
+      TRUST_FORWARDED_HEADERS: ${TRUST_FORWARDED_HEADERS:-true}
+      APP_BASE_URL: ${APP_BASE_URL:-http://127.0.0.1:8080}
+      MANAGEMENT_ADDRESS: 0.0.0.0
+      TRACING_ENABLED: ${TRACING_ENABLED:-false}
+      OTLP_TRACING_ENDPOINT: ${OTLP_TRACING_ENDPOINT:-http://jaeger:4318/v1/traces}
+      TRACING_SAMPLING_PROBABILITY: ${TRACING_SAMPLING_PROBABILITY:-1.0}
+      PAYMENT_PROVIDER: ${PAYMENT_PROVIDER:-mock}
+      PAYMENT_APP_ID: ${PAYMENT_APP_ID:-atry}
+      PAYMENT_MOCK_ENABLED: ${PAYMENT_MOCK_ENABLED:-true}
+      # 无公网域名时保持 true，靠主动查单轮询结算
+      PAYMENT_QUERY_ENABLED: ${PAYMENT_QUERY_ENABLED:-true}
+      PAYMENT_QUERY_INTERVAL_MS: ${PAYMENT_QUERY_INTERVAL_MS:-30000}
+      # 真实支付宝（PAYMENT_PROVIDER=alipay 时使用；无域名可不配 NOTIFY/RETURN）
+      ALIPAY_APP_ID: ${ALIPAY_APP_ID:-}
+      ALIPAY_PRIVATE_KEY: ${ALIPAY_PRIVATE_KEY:-}
+      ALIPAY_PUBLIC_KEY: ${ALIPAY_PUBLIC_KEY:-}
+      ALIPAY_SELLER_ID: ${ALIPAY_SELLER_ID:-}
+      ALIPAY_GATEWAY_URL: ${ALIPAY_GATEWAY_URL:-https://openapi.alipay.com/gateway.do}
+      ALIPAY_NOTIFY_URL: ${ALIPAY_NOTIFY_URL:-}
+      ALIPAY_RETURN_URL: ${ALIPAY_RETURN_URL:-}
+      ALIPAY_BILL_ENABLED: ${ALIPAY_BILL_ENABLED:-false}
+      ALIPAY_BILL_TYPE: ${ALIPAY_BILL_TYPE:-trade}
+      ALIPAY_BILL_CHARSET: ${ALIPAY_BILL_CHARSET:-GBK}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-}
+      ALERT_WEBHOOK_URL: ${ALERT_WEBHOOK_URL:-}
+      LOG_FILE: /app/logs/atry.log
+      # 堆 = mem_limit × 50%，固定非堆约 221m + jar/映射约 70m；768m 下 MaxHeapSize=384MiB、余量约 93m
+      JAVA_OPTS: ${JAVA_OPTS:--XX:MaxRAMPercentage=50 -XX:MaxDirectMemorySize=64m -XX:+UseG1GC -XX:+ExitOnOutOfMemoryError -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/app/logs -Duser.timezone=Asia/Shanghai -Xlog:gc*:file=/app/logs/gc.log:time,uptime,level,tags:filecount=5,filesize=20M}
+    ports:
+      # 8084 = 业务端口（外部/nginx 轻量存活探针用 /api/health，不查 DB/Redis）；
+      # 9091 = 管理端口（仅容器 readiness 用 /actuator/health/readiness，会查 db/redis）
+      - "${BACKEND_BIND:-127.0.0.1}:${BACKEND_PORT:-8084}:8084"
+      - "${MANAGEMENT_BIND:-127.0.0.1}:${MANAGEMENT_PORT:-9091}:9091"
+    volumes:
+      - backend-logs:/app/logs
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      # 容器 readiness 口径：9091 /actuator/health/readiness（含 db/redis 依赖）
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:9091/actuator/health/readiness | grep -q '\"status\":\"UP\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 40s
+    # 768m = 384m 堆（50%）+ 非堆约 221m + 映射约 70m，实测 RSS 约 375m、余量约 93m
+    mem_limit: ${BACKEND_MEM_LIMIT:-768m}
+    logging: *default-logging
+
+volumes:
+  mysql-data:
+  redis-data:
+  backend-logs:

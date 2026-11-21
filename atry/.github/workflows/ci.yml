@@ -1,0 +1,92 @@
+name: ci
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  data-boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: 数据边界棘轮检查（跨模块表 / 多表 SQL 只降不升）
+        run: python3 tools/table_access_inventory.py --baseline docs/generated/table-access-baseline.json
+      - name: Flyway 迁移纪律（版本段 / 唯一性 / 已发布校验和）
+        run: python3 tools/flyway_discipline.py --verify
+
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: itroot
+          MYSQL_DATABASE: atry_it
+          MYSQL_USER: atry
+          MYSQL_PASSWORD: atrypass
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -h localhost"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      IT_DB_URL: jdbc:mysql://127.0.0.1:3306/atry_it?allowPublicKeyRetrieval=true&useSSL=false&allowMultiQueries=true
+      IT_DB_USER: atry
+      IT_DB_PASSWORD: atrypass
+      IT_REDIS_HOST: 127.0.0.1
+      IT_REDIS_PORT: 6379
+      IT_REDIS_DATABASE: 15
+      COS_SECRET_ID: ci-dummy
+      COS_SECRET_KEY: ci-dummy
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Backend tests
+        run: mvn -B test
+      - name: Backend integration tests
+        run: mvn -B -Pintegration test
+      - name: JaCoCo coverage report
+        run: mvn -B -q jacoco:report
+
+  image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build backend image
+        run: docker build -t atry:${{ github.sha }} -f server/Dockerfile server
+      - name: Trivy image scan (CRITICAL, fixed only)
+        uses: aquasecurity/trivy-action@v0.36.0
+        env:
+          TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db
+          TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db
+        with:
+          image-ref: atry:${{ github.sha }}
+          format: table
+          exit-code: '1'
+          ignore-unfixed: true
+          severity: 'CRITICAL'
+          vuln-type: 'os,library'

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.wherelee</groupId>
+        <artifactId>atry-parent</artifactId>
+        <version>0.12.0</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+    <artifactId>atry-platform</artifactId>
+    <name>atry-platform（共享内核 + starter）</name>
+    <description>通用异常/审计/告警/租户/限流/幂等/对象存储与签名 URL 缓存</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.qcloud</groupId>
+            <artifactId>cos_api</artifactId>
+            <version>${cos.version}</version>
+        </dependency>
+        <!-- 慢 SQL 探针：只包 DataSource，不侵入业务；默认关闭，靠 app.logging.slow-sql-enabled 打开 -->
+        <dependency>
+            <groupId>net.ttddyy</groupId>
+            <artifactId>datasource-proxy</artifactId>
+            <version>1.11.1</version>
+        </dependency>
+    </dependencies>
+</project>
