@@ -30,7 +30,7 @@
 
     <properties>
         <java.version>21</java.version>
-        <jjwt.version>0.12.6</jjwt.version>
+        <jjwt.version>0.13.0</jjwt.version>
         <cos.version>5.6.247</cos.version>
         <alipay.version>4.40.1067.ALL</alipay.version>
         <test.excluded.groups>integration</test.excluded.groups>
